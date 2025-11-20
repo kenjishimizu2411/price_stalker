@@ -1,0 +1,14 @@
+# Ignorar ambiente virtual (pesado e inútil no repo)
+venv/
+env/
+.env
+
+# Ignorar arquivos compilados do Python (lixo gerado automaticamente)
+__pycache__/
+*.py[cod]
+
+# Ignorar variáveis de ambiente (SEGURANÇA MÁXIMA)
+.env
+
+# Ignorar configurações locais do VS Code (opcional, mas recomendado)
+.vscode/
