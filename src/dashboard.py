@@ -139,7 +139,7 @@ if st.session_state['user_id'] is None:
         
         st.markdown("---")
         st.write("🔑 **Chave de Acesso CallMeBot**")
-        st.caption("Para receber mensagens, envie 'I allow callmebot...' para o número ao lado e cole o código aqui.")
+        st.caption("Para receber mensagens, envie 'I allow callmebot to send me messages' para o número ao lado e cole o código aqui.")
         user_api_key = st.text_input("Sua API Key (Números)")
 
         new_pass = st.text_input("Escolha uma Senha", type="password")
