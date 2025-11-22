@@ -24,7 +24,7 @@ st.set_page_config(page_title="PriceStalker SaaS", page_icon="🕵️", layout="
 # ==================================================
 
 BANNER_HTML = """
-<div style="background-color: #0068c9; color: white; padding: 25px; border-radius: 12px; border-left: 6px solid #1a4c8f; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); margin-bottom: 20px;">
+<div style="background-color: #0c2663; color: white; padding: 25px; border-radius: 12px; border-left: 6px solid #1a4c8f; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); margin-bottom: 20px;">
     <h3 style="color: white; margin-top: 0; margin-bottom: 15px; font-family: sans-serif;">👋 Bem-vindo ao PriceStalker!</h3>
     <p style="font-size: 16px; margin-bottom: 15px;">
         O nosso objetivo é simples: <b>garantir que você pague o menor preço</b>. Funciona assim:
