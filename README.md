@@ -11,7 +11,7 @@
 ---
 
 ## 📸 Dashboard
-![Price Stalker Dashboard](https://github.com/kenjishimizu2411/price_stalker/blob/main/docs/dashboard_preview.png?raw=true)
+![Price Stalker Dashboard](https://github.com/kenjishimizu2411/price_stalker/blob/main/docs/tela_atual.PNG?raw=true)
 *(Nota: Substitua o link acima pelo caminho real da sua imagem)*
 
 ---
