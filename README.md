@@ -41,3 +41,85 @@ graph TD
     Scraper -->|Scraping| ECommerce[Amazon / Mercado Livre]
     Scraper -->|Notifica| WhatsApp[CallMeBot API]
     WhatsApp -->|Envia| UserPhone[Celular do Usuário]
+```
+
+### 🛠️ Tech Stack
+
+* **Frontend:** Streamlit hospedado no **Streamlit Community Cloud**.
+* **Database:** PostgreSQL Serverless hospedado na **Neon.tech** (AWS Region).
+* **Backend/Worker:** Python + Selenium rodando em containers Linux via **GitHub Actions** (CI/CD).
+* **DevOps:**
+    * Deploy automático do Frontend via Git Push na branch `main`.
+    * Automação do Scraper via Cron Job (`hourly_check.yml`).
+
+---
+
+## 📸 Screenshots
+
+### Painel de Controle (Dashboard)
+![Dashboard](https://github.com/kenjishimizu2411/price_stalker/blob/main/docs/tela_atual.PNG?raw=true)
+*Interface responsiva com gestão de produtos, gráficos históricos e modo noturno.*
+
+---
+
+## ⚙️ Funcionalidades Chave
+
+* **Autenticação Segura:** Sistema de Login/Cadastro com hash de senha (`bcrypt`).
+* **Scraping Híbrido:**
+    * *Amazon:* Tratamento de seletores CSS e Headers anti-bot.
+    * *Mercado Livre:* Estratégia prioritária via JSON-LD (Dados estruturados) para precisão máxima.
+* **Smart Alerts:** O sistema calcula a economia real ("R$ 50,00 abaixo da meta") e envia links limpos e diretos no WhatsApp.
+* **Análise Gráfica:** Gráficos interativos (Plotly) mostram a evolução do preço x meta ao longo do tempo.
+
+---
+
+## 💻 Como Rodar Localmente (Para Desenvolvedores)
+
+Se você deseja clonar e modificar o projeto:
+
+### 1. Clone o Repositório
+```bash
+git clone [https://github.com/kenjishimizu2411/price_stalker.git](https://github.com/kenjishimizu2411/price_stalker.git)
+cd price_stalker
+```
+
+### 2. Configure o Ambiente
+```bash
+python -m venv venv
+# Windows:
+venv\Scripts\activate
+# Linux/Mac:
+source venv/bin/activate
+
+pip install -r requirements.txt
+```
+
+### 3. Variáveis de Ambiente (.env)
+Crie um arquivo `.env` na raiz do projeto com a conexão do seu banco (Local ou Neon):
+```ini
+DATABASE_URL="postgres://usuario:senha@host:porta/banco"
+```
+
+### 4. Execute
+```bash
+# Rodar o Dashboard
+streamlit run src/dashboard.py
+
+# Rodar o Robô (uma vez)
+python src/main.py
+```
+
+---
+
+## ⚖️ Aviso Legal
+
+Este projeto é uma demonstração de engenharia de software e automação. 
+* O **PriceStalker** não possui vínculo com as lojas monitoradas.
+* O uso de Web Scraping deve ser feito de forma ética e responsável.
+* As notificações dependem da disponibilidade da API de terceiros (CallMeBot).
+
+---
+
+<p align="center">
+Developed with 💙 by <strong>Kenji Shimizu</strong>
+</p>
