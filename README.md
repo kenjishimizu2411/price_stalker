@@ -1,123 +1,43 @@
-# 📉 Price Stalker: Monitoramento Inteligente de Preços
+# 📉 PriceStalker V2.0 (SaaS Cloud Native)
 
-> Aplicação Full Stack para rastreamento de preços em e-commerces (Amazon & Mercado Livre) com notificações automáticas via WhatsApp.
+> **Plataforma de Monitoramento de Preços Inteligente** totalmente baseada em nuvem, com arquitetura distribuída e notificações via WhatsApp.
 
-![Python](https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge&logo=python)
-![Streamlit](https://img.shields.io/badge/Frontend-Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-336791?style=for-the-badge&logo=postgresql&logoColor=white)
-![Selenium](https://img.shields.io/badge/Scraping-Selenium-43B02A?style=for-the-badge&logo=selenium&logoColor=white)
-![WhatsApp](https://img.shields.io/badge/Notify-WhatsApp-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)
-
----
-
-## 📸 Dashboard
-![Price Stalker Dashboard](https://github.com/kenjishimizu2411/price_stalker/blob/main/docs/tela_atual.PNG?raw=true)
-
+![Status](https://img.shields.io/badge/Status-Online-success?style=for-the-badge)
+![Python](https://img.shields.io/badge/Python-3.11-blue?style=for-the-badge&logo=python)
+![Streamlit](https://img.shields.io/badge/Frontend-Streamlit_Cloud-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
+![Neon](https://img.shields.io/badge/Database-Neon_(Serverless_Postgres)-00E599?style=for-the-badge&logo=postgresql&logoColor=black)
+![GitHub Actions](https://img.shields.io/badge/Automation-GitHub_Actions-2088FF?style=for-the-badge&logo=github-actions&logoColor=white)
 
 ---
 
-## 💡 O Projeto (MVP)
-
-O **Price Stalker** resolve a dor de quem precisa monitorar produtos voláteis na internet. Diferente de extensões de navegador simples, ele funciona como um sistema centralizado que:
-
-1.  **Gerencia Usuários:** Permite cadastro e login seguro.
-2.  **Monitora 24/7:** Utiliza *bots* (Selenium) para varrer sites de e-commerce periodicamente.
-3.  **Analisa Oportunidades:** Compara o preço atual com a "Meta" definida pelo usuário.
-4.  **Notifica:** Envia alerta no WhatsApp quando o preço atinge a meta ou chega a uma margem de oportunidade (15%).
+## 🚀 Live Demo
+Acesse a aplicação rodando em produção agora mesmo:
+### [🔗 CLIQUE AQUI PARA ACESSAR O PRICESTALKER](https://pricestalker.streamlit.app)
 
 ---
 
-## 🏗️ Arquitetura e Tecnologias
+## 💡 Sobre o Projeto
 
-O sistema foi construído seguindo padrões de arquitetura modular:
+O **PriceStalker** evoluiu de um script local para um **SaaS (Software as a Service)** completo. Ele resolve o problema de monitorar preços em grandes e-commerces (Amazon & Mercado Livre) de forma autônoma.
 
-* **Frontend (UI):** Desenvolvido em **Streamlit**, oferecendo um dashboard interativo e responsivo para gestão dos monitoramentos.
-* **Backend (Core):** Python puro gerenciando a lógica de negócios.
-* **Web Scraping:** **Selenium Webdriver** configurado para navegação em marketplaces complexos (Amazon e Mercado Livre), simulando comportamento humano para evitar bloqueios.
-* **Banco de Dados:** **PostgreSQL**. Modelagem relacional robusta com tabelas para `Users`, `Products` e `Price_History` (Histórico de variação de preços).
-* **Notificações:** Integração com API **CallMeBot** para envio de mensagens via WhatsApp.
-
----
-
-## 📂 Estrutura do Banco de Dados
-
-O projeto utiliza um banco relacional para garantir integridade dos dados:
-
-* `users`: Credenciais e dados de contato (telefone para WhatsApp).
-* `products`: Links, metas de preço e status do monitoramento.
-* `price_history`: Log temporal de todas as flutuações de preço para análise futura.
+**Diferenciais da Versão 2.0:**
+1.  **100% Cloud:** Não depende mais da máquina do usuário ligada.
+2.  **Multi-Tenant:** Cada usuário tem sua conta, seus produtos e sua própria chave de API para notificações.
+3.  **Autônomo:** Um robô na nuvem verifica os preços de hora em hora e notifica apenas se houver oportunidade real.
 
 ---
 
-## 🚀 Como Rodar Localmente
+## 🏗️ Arquitetura de Solução (Cloud Native)
 
-### 1. Pré-requisitos
-* Python 3.10+
-* PostgreSQL instalado e rodando.
-* Google Chrome (para o Selenium).
+O projeto utiliza uma arquitetura moderna e desacoplada para garantir custo zero e alta disponibilidade:
 
-### 2. Instalação
-```bash
-# Clone o repositório
-git clone [https://github.com/kenjishimizu2411/price_stalker.git](https://github.com/kenjishimizu2411/price_stalker.git)
-cd price_stalker
-
-# Crie o ambiente virtual
-python -m venv venv
-
-# Windows
-.\venv\Scripts\activate
-# Linux/Mac
-source venv/bin/activate
-
-# Instale as dependências
-pip install -r requirements.txt
-```
-
-### 3. Configuração (.env)
-Crie um arquivo `.env` na raiz e configure suas credenciais:
-
-```ini
-# Banco de Dados PostgreSQL
-DB_HOST=localhost
-DB_NAME=price_stalker
-DB_USER=postgres
-DB_PASS=sua_senha_aqui
-
-# API CallMeBot (WhatsApp)
-WHATSAPP_API_KEY=sua_chave_aqui
-```
-
-### 4. Execução
-
-**Para iniciar a Interface (Dashboard):**
-```bash
-streamlit run src/dashboard.py
-```
-
-**Para iniciar o Robô de Monitoramento:**
-```bash
-python src/main.py
-```
-
----
-
-## ⚠️ Aviso Legal
-Este projeto é para fins educacionais e de portfólio. O uso de Web Scraping deve respeitar os termos de serviço dos sites alvo.
-
----
-
-## ⚖️ Isenção de Responsabilidade (Disclaimer)
-
-O **Price Stalker** é uma ferramenta de automação desenvolvida para auxiliar no monitoramento de preços. Ao utilizar este software, você concorda que:
-
-1.  **Independência:** Este software não possui vínculo oficial com Amazon, Mercado Livre ou WhatsApp.
-2.  **Uso dos Dados:** O usuário é integralmente responsável por garantir que o uso da ferramenta esteja em conformidade com os Termos de Serviço dos sites monitorados.
-3.  **Instabilidade:** Como a ferramenta depende da estrutura HTML de terceiros (Web Scraping), mudanças no layout dos sites alvo podem impactar o funcionamento temporário do monitoramento até que atualizações sejam lançadas. 
-O desenvolvedor não se responsabiliza por bloqueios de IP ou contas decorrentes do uso excessivo ou automatizado.
-
----
-
-<p align="center">
-<strong>Price Stalker</strong> — Desenvolvido por Kenji Shimizu
-</p>
+```mermaid
+graph TD
+    User[Usuário] -->|Acessa| Frontend[Streamlit Cloud]
+    Frontend -->|Lê/Escreve| DB[(Neon Serverless Postgres)]
+    
+    GitHub[GitHub Actions] -->|Cron Job (1h)| Scraper[Robô Python]
+    Scraper -->|Consulta| DB
+    Scraper -->|Scraping| ECommerce[Amazon / Mercado Livre]
+    Scraper -->|Notifica| WhatsApp[CallMeBot API]
+    WhatsApp -->|Envia| UserPhone[Celular do Usuário]
