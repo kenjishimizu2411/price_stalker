@@ -26,14 +26,15 @@ def get_db_connection():
 
 # --- NOVAS FUNÇÕES DE USUÁRIO ---
 
-def create_user(name, email, password_hash, phone):
+def create_user(name, email, password_hash, phone, api_key): # <--- 5º Argumento aqui!
     conn = get_db_connection()
     if not conn: return False
     try:
         cur = conn.cursor()
         cur.execute(
-            "INSERT INTO users (name, email, password_hash, phone) VALUES (%s, %s, %s, %s) RETURNING id",
-            (name, email, password_hash, phone)
+            # Adicionei a coluna whatsapp_api_key e o %s extra
+            "INSERT INTO users (name, email, password_hash, phone, whatsapp_api_key) VALUES (%s, %s, %s, %s, %s) RETURNING id",
+            (name, email, password_hash, phone, api_key)
         )
         user_id = cur.fetchone()[0]
         conn.commit()
@@ -85,18 +86,13 @@ def get_products_by_user(user_id):
         conn.close()
 
 def get_due_products():
-    """
-    Busca produtos onde:
-    (Agora) > (Ultima Vez + Intervalo)
-    OU
-    Nunca foi checado (last_checked_at IS NULL)
-    """
     conn = get_db_connection()
     if not conn: return []
     try:
         cur = conn.cursor()
+        # Adicionei u.whatsapp_api_key no final
         query = """
-        SELECT p.id, p.name, p.url, p.target_price, u.phone, u.name
+        SELECT p.id, p.name, p.url, p.target_price, u.phone, u.name, u.whatsapp_api_key
         FROM products p
         JOIN users u ON p.user_id = u.id
         WHERE p.last_checked_at IS NULL 

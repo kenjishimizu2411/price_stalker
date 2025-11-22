@@ -130,31 +130,58 @@ if st.session_state['user_id'] is None:
         new_name = st.text_input("Seu Nome")
         new_email = st.text_input("Seu E-mail")
         
+        # --- SEÇÃO WHATSAPP ---
         st.write("WhatsApp para Notificações")
         col_ddd, col_num = st.columns([1, 4])
+        
         with col_ddd:
             st.text_input("DDD", value="+55", disabled=True, label_visibility="collapsed")
         with col_num:
             phone_raw = st.text_input("Número", placeholder="(21) 99999-8888", label_visibility="collapsed")
         
+        # --- NOVA SEÇÃO: API KEY DO CALLMEBOT ---
+        st.markdown("---")
+        st.markdown("##### 🔑 Chave de Acesso (Obrigatório)")
+        
+        st.info(
+            """
+            Para o robô conseguir te enviar mensagens, você precisa autorizar:
+            1. Adicione o número **+34 644 87 21 57** (CallMeBot) nos seus contatos.
+            2. Mande a mensagem: `I allow callmebot to send me messages`
+            3. Ele vai responder com sua **API Key** (uma sequência de números).
+            4. **Cole a API Key abaixo:**
+            """
+        )
+        
+        user_api_key = st.text_input("Sua API Key CallMeBot", placeholder="Ex: 8692414")
+        # ----------------------------------------
+
+        st.markdown("---")
         new_pass = st.text_input("Escolha uma Senha", type="password")
         
         if st.button("Cadastrar"):
             clean_phone = sanitize_phone(phone_raw)
+            
             if len(clean_phone) < 12:
-                 st.error("Número de telefone inválido.")
-            elif new_email and new_pass and new_name:
+                 st.error("Número de telefone inválido. Digite DDD + Número.")
+            
+            # VERIFICA SE PREENCHEU TUDO, INCLUINDO A KEY
+            elif new_email and new_pass and new_name and user_api_key:
                 hashed = hash_password(new_pass)
-                uid = create_user(new_name, new_email, hashed, clean_phone)
+                
+                # --- AQUI ENVIAMOS A KEY PARA O BANCO ---
+                # Certifique-se que sua função create_user no database.py aceita 5 argumentos!
+                uid = create_user(new_name, new_email, hashed, clean_phone, user_api_key)
+                
                 if uid:
                     st.session_state['user_id'] = uid
                     st.session_state['user_name'] = new_name
-                    st.success("Conta criada! Entrando...")
+                    st.success("Conta criada com sucesso! Entrando...")
                     st.rerun()
                 else:
-                    st.error("Erro ao criar conta.")
+                    st.error("Erro ao criar conta. E-mail já existe?")
             else:
-                st.warning("Preencha todos os campos.")
+                st.warning("Por favor, preencha todos os campos, incluindo a API Key.")
 
 # --- ÁREA LOGADA ---
 else:
@@ -331,16 +358,21 @@ else:
                         layer="below", line_width=0,
                     )
                     for index, row in df_daily.iterrows():
+                        # Define a cor: Verde se barato, Vermelho se caro
+                        cor_linha = "rgba(0, 200, 83, 0.4)" if row['price'] <= p_target else "rgba(255, 0, 0, 0.4)"
+                        
                         fig.add_shape(
                             type="line",
-                            x0=row['dia_str'], y0=p_target,
-                            x1=row['dia_str'], y1=row['price'],
+                            x0=row['dia_str'], 
+                            y0=p_target,      # Parte da Meta
+                            x1=row['dia_str'], 
+                            y1=row['price'],  # Vai até o Preço
                             line=dict(
-                                color="rgba(202, 202, 250, 0.3)", # Azul bem clarinho (transparente)
+                                color=cor_linha, # Usa a cor que decidimos acima
                                 width=2, 
-                                dash="dot" # Tracejado para ficar elegante
+                                dash="dot"
                             ),
-                            layer="below" # Fica atrás da bolinha e da linha principal
+                            layer="below"
                         )
                     # 2. Linha do Preço
                     fig.add_trace(go.Scatter(
@@ -348,8 +380,8 @@ else:
                         y=df_daily['price'],
                         mode='lines+markers+text',
                         name='Preço',
-                        line=dict(color='#cacafa', width=8),
-                        marker=dict(size=8, color='#cacafa'),
+                        line=dict(color="#e7e7fc", width=1),
+                        marker=dict(size=3, color='#cacafa'),
                         text=df_daily['price'].apply(lambda x: f"{x:.2f}"),
                         textposition="top center"
                     ))

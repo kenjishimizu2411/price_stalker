@@ -31,7 +31,6 @@ jobs:
       - name: Rodar o Main.py
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          WHATSAPP_API_KEY: ${{ secrets.WHATSAPP_API_KEY }}
         run: python src/main.py
 
       - name: Upload de Prints de Erro

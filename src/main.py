@@ -15,19 +15,12 @@ from src.database import get_db_connection, get_due_products, update_last_checke
 from src.scraper import Scraper
 from src.whatsapp import send_whatsapp_message
 
-MY_API_KEY = os.getenv("WHATSAPP_API_KEY")
-
-if not MY_API_KEY:
-    print("❌ ERRO: Não encontrei a WHATSAPP_API_KEY no .env")
-    sys.exit(1)
-
+# OBS: Removemos a MY_API_KEY global pois agora vem do banco de dados de cada usuário!
 
 def clean_url_for_whatsapp(url):
     """Limpa a URL para não quebrar o CallMeBot"""
-    if "?" in url:
-        url = url.split("?")[0]
-    if "#" in url:
-        url = url.split("#")[0]
+    if "?" in url: url = url.split("?")[0]
+    if "#" in url: url = url.split("#")[0]
 
     if "amazon" in url and "/dp/" in url:
         try:
@@ -38,9 +31,10 @@ def clean_url_for_whatsapp(url):
             return url
     return url
 
-
 def job_saas():
     print(f"\n🔄 [SaaS] PriceStalker: {datetime.now().strftime('%H:%M:%S')}")
+    
+    # Essa função agora retorna 7 colunas (incluindo user_apikey)
     tasks = get_due_products()
 
     if not tasks:
@@ -54,12 +48,13 @@ def job_saas():
     cursor = conn.cursor()
 
     for task in tasks:
-        prod_id, prod_name, url, target, user_phone, user_name = task
+        # --- MUDANÇA AQUI: Desempacotando a user_apikey ---
+        prod_id, prod_name, url, target, user_phone, user_name, user_apikey = task
 
         target_float = float(target)
         phone_clean = user_phone.replace("+", "").replace(" ", "").replace("-", "").strip()
 
-        print(f"   👉 {prod_name}...", end='')
+        print(f"   👉 {prod_name} ({user_name})...", end='')
 
         try:
             current_price = bot.get_price(url)
@@ -76,42 +71,50 @@ def job_saas():
 
                 # -------- PREÇO ABAIXO DO ALVO --------
                 if current_price <= target_float:
-                    print(" 🚨 PREÇO BAIXO! ENVIANDO...")
+                    
+                    # Só tenta enviar se o usuário tiver API Key cadastrada
+                    if user_apikey:
+                        print(" 🚨 PREÇO BAIXO! ENVIANDO...")
+                        short_url = clean_url_for_whatsapp(url)
+                        economia = target_float - current_price
 
-                    short_url = clean_url_for_whatsapp(url)
-                    economia = target_float - current_price
+                        msg = (
+                            f"🔥 *BAIXOU! OPORTUNIDADE DETECTADA* 🔥\n\n"
+                            f"📦 *{prod_name}*\n\n"
+                            f"😱 Achei o seu produto por *R$ {current_price:.2f}*!!!\n"
+                            f"🎯 Você queria que ele chegasse a *R$ {target_float:.2f}*...\n\n"
+                            f"📉 Ou seja: *R$ {economia:.2f} DE DESCONTO* se comprar agora!!\n\n"
+                            f"👉 *Garanta aqui:* {short_url}"
+                        )
 
-                    msg = (
-                        f"🔥 *BAIXOU! OPORTUNIDADE DETECTADA* 🔥\n\n"
-                        f"📦 *{prod_name}*\n\n"
-                        f"😱 Achei o seu produto por *R$ {current_price:.2f}*!!!\n"
-                        f"🎯 Você queria que ele chegasse a *R$ {target_float:.2f}*...\n\n"
-                        f"📉 Ou seja: *R$ {economia:.2f} DE DESCONTO* se comprar agora!!\n\n"
-                        f"👉 *Garanta aqui:* {short_url}"
-                    )
-
-                    success = send_whatsapp_message(phone_clean, msg, MY_API_KEY)
-                    if not success:
-                        print("      ❌ Falha no envio do Zap (Verifique chave/fone)")
+                        # Usa a user_apikey específica deste usuário
+                        success = send_whatsapp_message(phone_clean, msg, user_apikey)
+                        if not success:
+                            print("      ❌ Falha no envio do Zap (Verifique chave/fone)")
+                    else:
+                        print("      ⚠️ Usuário sem API Key. Não notificado.")
 
                 # -------- PREÇO PERTO DO ALVO (15%) --------
                 elif current_price <= (target_float * 1.15):
-                    print(" 🤏 TÁ QUASE! ENVIANDO ALERTA SECRETO...")
+                    
+                    if user_apikey:
+                        print(" 🤏 TÁ QUASE! ENVIANDO ALERTA SECRETO...")
+                        short_url = clean_url_for_whatsapp(url)
+                        diferenca = current_price - target_float
 
-                    short_url = clean_url_for_whatsapp(url)
-                    diferenca = current_price - target_float
+                        msg = (
+                            f"👀 *PSIU! TÁ QUASE LÁ...* 👀\n\n"
+                            f"📦 *{prod_name}*\n"
+                            f"O preço caiu para *R$ {current_price:.2f}*.\n"
+                            f"Ainda está R$ {diferenca:.2f} acima da sua meta, mas achei que você gostaria de saber!\n\n"
+                            f"🔗 Espiar: {short_url}"
+                        )
 
-                    msg = (
-                        f"👀 *PSIU! TÁ QUASE LÁ...* 👀\n\n"
-                        f"📦 *{prod_name}*\n"
-                        f"O preço caiu para *R$ {current_price:.2f}*.\n"
-                        f"Ainda está R$ {diferenca:.2f} acima da sua meta, mas achei que você gostaria de saber!\n\n"
-                        f"🔗 Espiar: {short_url}"
-                    )
-
-                    success = send_whatsapp_message(phone_clean, msg, MY_API_KEY)
-                    if not success:
-                        print("      ❌ Falha no envio do Zap (Verifique chave/fone)")
+                        success = send_whatsapp_message(phone_clean, msg, user_apikey)
+                        if not success:
+                            print("      ❌ Falha no envio do Zap")
+                    else:
+                        print("      ⚠️ Usuário sem API Key.")
 
                 else:
                     print(" 📉 (Caro)")
@@ -126,51 +129,29 @@ def job_saas():
             update_last_checked(prod_id)
 
     conn.close()
-
     try:
         bot.close_browser()
     except:
         pass
 
+def run_once():
+    """Roda uma única vez (Para Cloud/Cron Jobs)"""
+    print(f"🚀 [Cloud Run] Iniciando verificação única: {datetime.now()}")
+    job_saas()
+    print("🏁 [Cloud Run] Finalizado com sucesso.")
 
 def start_saas_loop():
+    """Roda em loop (Para PC Local)"""
+    print(f"🚀 [Local Mode] Rodando em Loop...")
     try:
         while True:
             job_saas()
+            print("💤 Dormindo 60s...")
             time.sleep(60)
     except KeyboardInterrupt:
         print("\n🛑 Parando.")
 
-
 if __name__ == "__main__":
-    def run_once():
-        """Roda uma única vez (Para Cloud/Cron Jobs)"""
-        print(f"🚀 [Cloud Run] Iniciando verificação única: {datetime.now()}")
-        job_saas()
-        print("🏁 [Cloud Run] Finalizado com sucesso.")
-
-    def start_saas_loop():
-        """Roda em loop infinito (Para Localhost)"""
-        print(f"🚀 [Local Mode] PriceStalker Rodando com API KEY: {MY_API_KEY}")
-        try:
-            while True:
-                ()
-                print("💤 Dormindo 60s...")
-                time.sleep(60)
-        except KeyboardInterrupt:
-            print("\n🛑 Parando.")
-
-if __name__ == "__main__":
-    # Verifica se existe uma variável de ambiente que diz "ESTOU_NO_GITHUB"
-    # Ou podemos simplesmente rodar once por padrão se passarmos um argumento
-    
-    # Vamos simplificar: O GitHub Actions roda comando 'python src/main.py'
-    # Vamos mudar a lógica para: RODA UMA VEZ E PARA.
-    # Quem controla o tempo agora é o GitHub, não o Python.
-    
-    # Se você quiser rodar em loop no seu PC, descomente a linha do loop.
-    # Para produção (GitHub), vamos usar o run_once.
-    
-    run_once() 
-    
-    # start_saas_loop() # <--- Use essa se quiser testar no seu PC em loop
+    # Para o GitHub Actions, usamos run_once()
+    # Se quiser testar looping no PC, troque para start_saas_loop()
+    run_once()
