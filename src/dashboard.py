@@ -41,7 +41,7 @@ BANNER_HTML = """
 """
 
 SIDEBAR_HTML = """
-<div style="background-color: #FFD54F; color: white; padding: 15px; border-radius: 10px; border-left: 5px solid #1a4c8f; font-size: 14px; line-height: 1.5;">
+<div style="background-color: #FFD54F; color: black; padding: 15px; border-radius: 10px; border-left: 5px solid #382c04; font-size: 14px; line-height: 1.5;">
     <b>⚠ Requisito ⚠:</b><br>
     Envie uma mensagem para o <b>CallMeBot (+34 644 87 21 57)</b> e mande o texto: <br>
     <b>'I allow callmebot to send me messages'</b> <br>
