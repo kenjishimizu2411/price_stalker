@@ -143,4 +143,34 @@ def start_saas_loop():
 
 
 if __name__ == "__main__":
-    start_saas_loop()
+    def run_once():
+        """Roda uma única vez (Para Cloud/Cron Jobs)"""
+        print(f"🚀 [Cloud Run] Iniciando verificação única: {datetime.now()}")
+        job_saas()
+        print("🏁 [Cloud Run] Finalizado com sucesso.")
+
+    def start_saas_loop():
+        """Roda em loop infinito (Para Localhost)"""
+        print(f"🚀 [Local Mode] PriceStalker Rodando com API KEY: {MY_API_KEY}")
+        try:
+            while True:
+                ()
+                print("💤 Dormindo 60s...")
+                time.sleep(60)
+        except KeyboardInterrupt:
+            print("\n🛑 Parando.")
+
+if __name__ == "__main__":
+    # Verifica se existe uma variável de ambiente que diz "ESTOU_NO_GITHUB"
+    # Ou podemos simplesmente rodar once por padrão se passarmos um argumento
+    
+    # Vamos simplificar: O GitHub Actions roda comando 'python src/main.py'
+    # Vamos mudar a lógica para: RODA UMA VEZ E PARA.
+    # Quem controla o tempo agora é o GitHub, não o Python.
+    
+    # Se você quiser rodar em loop no seu PC, descomente a linha do loop.
+    # Para produção (GitHub), vamos usar o run_once.
+    
+    run_once() 
+    
+    # start_saas_loop() # <--- Use essa se quiser testar no seu PC em loop
