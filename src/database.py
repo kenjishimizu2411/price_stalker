@@ -6,6 +6,13 @@ load_dotenv()
 
 def get_db_connection():
     try:
+        # Tenta pegar a URL completa (Padrão Nuvem)
+        database_url = os.getenv('DATABASE_URL')
+        
+        if database_url:
+            return psycopg2.connect(database_url)
+        
+        # Se não tiver URL, tenta o modo antigo (Localhost)
         return psycopg2.connect(
             dbname=os.getenv('DB_NAME'),
             user=os.getenv('DB_USER'),
