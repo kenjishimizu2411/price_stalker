@@ -1,67 +1,112 @@
-# 🕵️ PriceStalker - Monitorador de Preços Inteligente (SaaS)
+# 📉 Price Stalker: Monitoramento Inteligente de Preços
 
-O **PriceStalker** é uma aplicação Full-Stack projetada para monitorar preços de produtos em grandes e-commerces (Amazon, Mercado Livre) e notificar o usuário via WhatsApp apenas quando o preço atingir uma meta pré-estabelecida.
+> Aplicação Full Stack para rastreamento de preços em e-commerces (Amazon & Mercado Livre) com notificações automáticas via WhatsApp.
 
-Diferente de comparadores comuns, o PriceStalker funciona com **Inteligência de Dados**, gerando gráficos de histórico e calculando a economia real.
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge&logo=python)
+![Streamlit](https://img.shields.io/badge/Frontend-Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-336791?style=for-the-badge&logo=postgresql&logoColor=white)
+![Selenium](https://img.shields.io/badge/Scraping-Selenium-43B02A?style=for-the-badge&logo=selenium&logoColor=white)
+![WhatsApp](https://img.shields.io/badge/Notify-WhatsApp-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)
 
-![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-336791?style=for-the-badge&logo=postgresql&logoColor=white)
-![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
+---
 
-## 🚀 Funcionalidades
+## 📸 Dashboard
+![Price Stalker Dashboard](https://github.com/kenjishimizu2411/price_stalker/blob/main/docs/dashboard_preview.png?raw=true)
+*(Nota: Substitua o link acima pelo caminho real da sua imagem)*
 
-* **Multi-Tenant SaaS:** Sistema de Login e Cadastro de usuários seguros (Hash de senha).
-* **Scraping Híbrido:** Suporte para Amazon e Mercado Livre (bypassing anti-bots).
-* **Agente Autônomo:** Script em background que checa preços 24/7.
-* **Dashboard Interativo:** Interface visual para gestão de produtos e análise de gráficos.
-* **Notificações Smart:** Envia alertas no WhatsApp com cálculo de desconto ("Você economizou R$ 50,00!").
+---
 
-## 🛠️ Tecnologias Utilizadas
+## 💡 O Projeto (MVP)
 
-* **Backend/Core:** Python 3.11
-* **Frontend:** Streamlit (Interface Web)
-* **Banco de Dados:** PostgreSQL (Driver psycopg2)
-* **Automação Web:** Selenium WebDriver & Beautiful Soup
-* **Análise de Dados:** Pandas & Plotly (Gráficos Interativos)
-* **Notificações:** API CallMeBot (Gateway WhatsApp)
+O **Price Stalker** resolve a dor de quem precisa monitorar produtos voláteis na internet. Diferente de extensões de navegador simples, ele funciona como um sistema centralizado que:
 
-## ⚙️ Como Rodar Localmente
+1.  **Gerencia Usuários:** Permite cadastro e login seguro.
+2.  **Monitora 24/7:** Utiliza *bots* (Selenium) para varrer sites de e-commerce periodicamente.
+3.  **Analisa Oportunidades:** Compara o preço atual com a "Meta" definida pelo usuário.
+4.  **Notifica:** Envia alerta no WhatsApp quando o preço atinge a meta ou chega a uma margem de oportunidade (15%).
 
-1.  **Clone o repositório**
-    ```bash
-    git clone [https://github.com/kenjishimizu2411/price_stalker.git](https://github.com/kenjishimizu2411/price_stalker.git)
-    cd price_stalker
-    ```
+---
 
-2.  **Configure o Ambiente Virtual**
-    ```bash
-    python -m venv venv
-    # Windows:
-    venv\Scripts\activate
-    # Linux/Mac:
-    source venv/bin/activate
-    ```
+## 🏗️ Arquitetura e Tecnologias
 
-3.  **Instale as dependências**
-    ```bash
-    pip install -r requirements.txt
-    ```
+O sistema foi construído seguindo padrões de arquitetura modular:
 
-4.  **Configure as Variáveis de Ambiente (.env)**
-    Crie um arquivo `.env` na raiz e adicione:
-    ```ini
-    DB_NAME=pricestalker
-    DB_USER=postgres
-    DB_PASS=sua_senha
-    DB_HOST=localhost
-    DB_PORT=5432
-    WHATSAPP_API_KEY=sua_chave_callmebot
-    ```
+* **Frontend (UI):** Desenvolvido em **Streamlit**, oferecendo um dashboard interativo e responsivo para gestão dos monitoramentos.
+* **Backend (Core):** Python puro gerenciando a lógica de negócios.
+* **Web Scraping:** **Selenium Webdriver** configurado para navegação em marketplaces complexos (Amazon e Mercado Livre), simulando comportamento humano para evitar bloqueios.
+* **Banco de Dados:** **PostgreSQL**. Modelagem relacional robusta com tabelas para `Users`, `Products` e `Price_History` (Histórico de variação de preços).
+* **Notificações:** Integração com API **CallMeBot** para envio de mensagens via WhatsApp.
 
-5.  **Execute a Aplicação**
-    * **Terminal 1 (Interface):** `streamlit run src/dashboard.py`
-    * **Terminal 2 (Robô):** `python src/main.py`
+---
 
-## 👨‍💻 Desenvolvedor
+## 📂 Estrutura do Banco de Dados
 
-Desenvolvido por **Kenji Shimizu** como projeto de Engenharia de Software Full-Stack.
+O projeto utiliza um banco relacional para garantir integridade dos dados:
+
+* `users`: Credenciais e dados de contato (telefone para WhatsApp).
+* `products`: Links, metas de preço e status do monitoramento.
+* `price_history`: Log temporal de todas as flutuações de preço para análise futura.
+
+---
+
+## 🚀 Como Rodar Localmente
+
+### 1. Pré-requisitos
+* Python 3.10+
+* PostgreSQL instalado e rodando.
+* Google Chrome (para o Selenium).
+
+### 2. Instalação
+```bash
+# Clone o repositório
+git clone [https://github.com/kenjishimizu2411/price_stalker.git](https://github.com/kenjishimizu2411/price_stalker.git)
+cd price_stalker
+
+# Crie o ambiente virtual
+python -m venv venv
+
+# Windows
+.\venv\Scripts\activate
+# Linux/Mac
+source venv/bin/activate
+
+# Instale as dependências
+pip install -r requirements.txt
+```
+
+### 3. Configuração (.env)
+Crie um arquivo `.env` na raiz e configure suas credenciais:
+
+```ini
+# Banco de Dados PostgreSQL
+DB_HOST=localhost
+DB_NAME=price_stalker
+DB_USER=postgres
+DB_PASS=sua_senha_aqui
+
+# API CallMeBot (WhatsApp)
+WHATSAPP_API_KEY=sua_chave_aqui
+```
+
+### 4. Execução
+
+**Para iniciar a Interface (Dashboard):**
+```bash
+streamlit run src/dashboard.py
+```
+
+**Para iniciar o Robô de Monitoramento:**
+```bash
+python src/main.py
+```
+
+---
+
+## ⚠️ Aviso Legal
+Este projeto é para fins educacionais e de portfólio. O uso de Web Scraping deve respeitar os termos de serviço (`robots.txt`) dos sites alvo.
+
+---
+
+<p align="center">
+<strong>Price Stalker</strong> — Desenvolvido por Kenji Shimizu
+</p>
