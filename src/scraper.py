@@ -48,20 +48,31 @@ class Scraper:
     def get_price(self, url):
         try:
             self.driver.get(url)
-            sleep(3) # Espera carregar o site
+            sleep(5) # Aumentei um pouco o tempo de espera na nuvem
             
-            # --- O CÉREBRO DA DECISÃO ---
+            # --- LÓGICA DE DECISÃO ---
+            price = None
             if "amazon" in url:
-                return self._extract_amazon()
+                price = self._extract_amazon()
             elif "mercadolivre" in url:
-                return self._extract_mercadolivre()
+                price = self._extract_mercadolivre()
             else:
-                print("❌ Loja não suportada ainda.")
+                print("❌ Loja não suportada.")
                 return None
-            # ---------------------------
+            
+            # --- DEBUG VISUAL NA NUVEM ---
+            # Se não achou o preço, tira uma foto para sabermos o porquê
+            if price is None:
+                print("📸 Não achei o preço. Tirando print de diagnóstico...")
+                # Cria um nome de arquivo limpo
+                filename = f"erro_{url.split('//')[1].split('/')[0]}.png"
+                self.driver.save_screenshot(filename)
+            
+            return price
 
         except Exception as e:
             print(f"❌ Erro crítico no Selenium: {e}")
+            self.driver.save_screenshot("erro_critico.png")
             return None
 
     def _extract_amazon(self):
