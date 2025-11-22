@@ -17,6 +17,11 @@ class Scraper:
         chrome_options.add_argument("--start-maximized")
         chrome_options.add_argument("--headless=new") # O modo novo é vital
         chrome_options.add_argument("--window-size=1920,1080")
+
+        # --- FLAGS ESSENCIAIS PARA RODAR NO GITHUB ACTIONS (LINUX) ---
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--disable-gpu")
         
         # 2. O TRUQUE DO IDIOMA (Resolve o erro em espanhol)
         # Diz ao site que somos brasileiros e aceitamos português

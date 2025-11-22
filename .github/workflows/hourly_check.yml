@@ -1,37 +1,33 @@
 name: PriceStalker Robot 🤖
 
-# QUANDO RODAR?
 on:
   schedule:
-    # Cron Job: Roda no minuto 0 de cada hora (0 * * * *)
     - cron: '0 * * * *'
-  # Permite rodar manualmente clicando num botão (pra testar)
   workflow_dispatch:
 
-# O QUE FAZER?
 jobs:
   run-scraper:
-    runs-on: ubuntu-latest # Aluga um computador Linux na hora
+    runs-on: ubuntu-latest
 
     steps:
-      # 1. Baixa seu código
       - name: Checkout do código
         uses: actions/checkout@v3
 
-      # 2. Instala Python
+      # --- PASSO NOVO: INSTALA O NAVEGADOR CHROME ---
+      - name: Configurar Chrome
+        uses: browser-actions/setup-chrome@latest
+      # ----------------------------------------------
+
       - name: Configurar Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      # 3. Instala as bibliotecas
       - name: Instalar dependências
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # 4. Roda o Scraper
-      # Onde a mágica acontece. Ele injeta as senhas secretas como variáveis de ambiente
       - name: Rodar o Main.py
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
