@@ -33,14 +33,14 @@ O projeto utiliza uma arquitetura moderna e desacoplada para garantir custo zero
 
 ```mermaid
 graph TD
-    User[Usuário] -->|Acessa| Frontend[Streamlit Cloud]
-    Frontend -->|Lê/Escreve| DB[(Neon Serverless Postgres)]
+    User["Usuário"] -->|Acessa| Frontend["Streamlit Cloud"]
+    Frontend -->|"Lê/Escreve"| DB[("Neon Serverless Postgres")]
     
-    GitHub[GitHub Actions] -->|Cron Job (1h)| Scraper[Robô Python]
+    GitHub["GitHub Actions"] -->|"Cron Job (1h)"| Scraper["Robô Python"]
     Scraper -->|Consulta| DB
-    Scraper -->|Scraping| ECommerce[Amazon / Mercado Livre]
-    Scraper -->|Notifica| WhatsApp[CallMeBot API]
-    WhatsApp -->|Envia| UserPhone[Celular do Usuário]
+    Scraper -->|Scraping| ECommerce["Amazon / Mercado Livre"]
+    Scraper -->|Notifica| WhatsApp["CallMeBot API"]
+    WhatsApp -->|Envia| UserPhone["Celular do Usuário"]
 ```
 
 ### 🛠️ Tech Stack
