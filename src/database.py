@@ -155,3 +155,37 @@ def delete_product(product_id):
         return False
     finally:
         conn.close()
+
+def get_user_info(user_id):
+    """Busca todos os dados do perfil do usuário"""
+    conn = get_db_connection()
+    if not conn: return None
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT name, email, phone, whatsapp_api_key FROM users WHERE id = %s", (user_id,))
+        return cur.fetchone() # Retorna tupla: (Nome, Email, Fone, Key)
+    except Exception as e:
+        print(f"Erro ao buscar user: {e}")
+        return None
+    finally:
+        conn.close()
+
+def update_user_profile(user_id, name, email, phone, api_key):
+    """Atualiza os dados cadastrais"""
+    conn = get_db_connection()
+    if not conn: return False
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """UPDATE users 
+               SET name = %s, email = %s, phone = %s, whatsapp_api_key = %s 
+               WHERE id = %s""",
+            (name, email, phone, api_key, user_id)
+        )
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Erro ao atualizar perfil: {e}")
+        return False
+    finally:
+        conn.close()

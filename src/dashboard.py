@@ -12,7 +12,9 @@ from database import (
     add_product, 
     get_products_by_user,
     delete_product,       
-    update_product_full 
+    update_product_full,
+    get_user_info,
+    update_user_profile
 )
 from auth import hash_password, check_password
 
@@ -158,11 +160,84 @@ if st.session_state['user_id'] is None:
 else:
     # BARRA LATERAL
     with st.sidebar:
-        st.write(f"Olá, **{st.session_state['user_name']}**!")
+        
+        # Busca dados atualizados do banco
+        user_data = get_user_info(st.session_state['user_id'])
+        
+        if user_data:
+            u_name, u_email, u_phone, u_key = user_data
+            
+            # Controle de Estado: Modo Edição
+            if 'editing_profile' not in st.session_state:
+                st.session_state['editing_profile'] = False
+
+            # --- MODO VISUALIZAÇÃO ---
+            if not st.session_state['editing_profile']:
+                st.markdown(f"### 👋 Olá, {u_name.split()[0]}!")
+                
+                # Caixa Estilizada com HTML/CSS
+                st.markdown(
+                    f"""
+                    <div style="
+                        background-color: #1e2530;
+                        padding: 15px;
+                        border-radius: 10px;
+                        border: 1px solid #333;
+                        margin-bottom: 10px;
+                    ">
+                        <p style="margin:0; color: #888; font-size: 12px;">👤 Nome Completo</p>
+                        <p style="margin:0; font-weight: bold; margin-bottom: 8px;">{u_name}</p>
+                        
+                        <p style="margin:0; color: #888; font-size: 12px;">📧 E-mail</p>
+                        <p style="margin:0; font-weight: bold; margin-bottom: 8px;">{u_email}</p>
+                        
+                        <p style="margin:0; color: #888; font-size: 12px;">📱 WhatsApp</p>
+                        <p style="margin:0; font-weight: bold;">{u_phone}</p>
+                    </div>
+                    """, 
+                    unsafe_allow_html=True
+                )
+                
+                # Botão para ativar edição
+                if st.button("✏️ Editar Perfil"):
+                    st.session_state['editing_profile'] = True
+                    st.rerun()
+
+            # --- MODO EDIÇÃO ---
+            else:
+                st.markdown("### ✏️ Editando Perfil")
+                with st.form("edit_profile_form"):
+                    new_u_name = st.text_input("Nome", value=u_name)
+                    new_u_email = st.text_input("E-mail", value=u_email)
+                    new_u_phone = st.text_input("WhatsApp (55...)", value=u_phone)
+                    new_u_key = st.text_input("API Key CallMeBot", value=u_key if u_key else "")
+                    
+                    col_save, col_cancel = st.columns(2)
+                    
+                    saved = col_save.form_submit_button("💾 Salvar")
+                    # Cancelar não funciona bem dentro de form como botão normal, 
+                    # então usamos lógica de session state fora ou assumimos que o form é só pra salvar.
+                    
+                    if saved:
+                        clean_phone = sanitize_phone(new_u_phone)
+                        if update_user_profile(st.session_state['user_id'], new_u_name, new_u_email, clean_phone, new_u_key):
+                            st.success("Perfil atualizado!")
+                            st.session_state['user_name'] = new_u_name # Atualiza sessão
+                            st.session_state['editing_profile'] = False # Sai do modo edição
+                            st.rerun()
+                        else:
+                            st.error("Erro ao atualizar.")
+                
+                if st.button("Cancelar Edição"):
+                    st.session_state['editing_profile'] = False
+                    st.rerun()
+
+        st.markdown("---")
         if st.button("Sair"):
             st.session_state['user_id'] = None
             st.rerun()
-        st.markdown("---")
+            
+        # Box Azul do CallMeBot (Manti aqui embaixo)
         st.markdown(SIDEBAR_HTML, unsafe_allow_html=True)
     
     st.title("🕵️ Painel de Controle")
