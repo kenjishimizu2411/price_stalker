@@ -103,7 +103,18 @@ python src/main.py
 ---
 
 ## ⚠️ Aviso Legal
-Este projeto é para fins educacionais e de portfólio. O uso de Web Scraping deve respeitar os termos de serviço (`robots.txt`) dos sites alvo.
+Este projeto é para fins educacionais e de portfólio. O uso de Web Scraping deve respeitar os termos de serviço dos sites alvo.
+
+---
+
+## ⚖️ Isenção de Responsabilidade (Disclaimer)
+
+O **Price Stalker** é uma ferramenta de automação desenvolvida para auxiliar no monitoramento de preços. Ao utilizar este software, você concorda que:
+
+1.  **Independência:** Este software não possui vínculo oficial com Amazon, Mercado Livre ou WhatsApp.
+2.  **Uso dos Dados:** O usuário é integralmente responsável por garantir que o uso da ferramenta esteja em conformidade com os Termos de Serviço dos sites monitorados.
+3.  **Instabilidade:** Como a ferramenta depende da estrutura HTML de terceiros (Web Scraping), mudanças no layout dos sites alvo podem impactar o funcionamento temporário do monitoramento até que atualizações sejam lançadas. 
+O desenvolvedor não se responsabiliza por bloqueios de IP ou contas decorrentes do uso excessivo ou automatizado.
 
 ---
 
