@@ -48,7 +48,7 @@ class Scraper:
     def get_price(self, url):
         try:
             self.driver.get(url)
-            sleep(5) # Aumentei um pouco o tempo de espera na nuvem
+            sleep(12) 
             
             # --- LÓGICA DE DECISÃO ---
             price = None
@@ -77,15 +77,40 @@ class Scraper:
 
     def _extract_amazon(self):
         try:
+            # --- TENTATIVA DE BYPASS (FURAR BLOQUEIO) ---
+            # Verifica se caiu na tela de "Clique no botão..."
+            if "continuar comprando" in self.driver.page_source:
+                print("🐶 Bloqueio 'Soft' da Amazon detectado. Tentando furar...")
+                try:
+                    # Tenta achar o botão pelo texto ou tag
+                    # Geralmente é um botão simples
+                    botoes = self.driver.find_elements(By.TAG_NAME, "button")
+                    for btn in botoes:
+                        if "continuar comprando" in btn.text.lower():
+                            btn.click()
+                            print("   -> Botão clicado! Esperando recarregar...")
+                            sleep(3) # Espera a página verdadeira carregar
+                            break
+                except Exception as e_bypass:
+                    print(f"   -> Falha ao tentar clicar no botão: {e_bypass}")
+
+            # --- ROTINA NORMAL DE PREÇO ---
             elementos = self.driver.find_elements(By.CSS_SELECTOR, '.a-price-whole')
             if not elementos:
                 elementos = self.driver.find_elements(By.CSS_SELECTOR, '.a-offscreen')
             
+            if not elementos: 
+                # Última tentativa: Às vezes o preço está num bloco diferente
+                elementos = self.driver.find_elements(By.ID, 'price_inside_buybox')
+
             if not elementos: return None
             
+            # Pega o texto (às vezes está oculto no textContent)
             raw_price = elementos[0].get_attribute("textContent")
             return self._clean_price(raw_price)
-        except:
+            
+        except Exception as e:
+            print(f"⚠️ Erro Amazon: {e}")
             return None
 
     def _extract_mercadolivre(self):

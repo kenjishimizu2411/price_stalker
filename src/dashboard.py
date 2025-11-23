@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go # <--- IMPORTANTE: Nova biblioteca para gráficos avançados
+import plotly.graph_objects as go
 import re
 
 # --- IMPORTANTO AS FUNÇÕES DO BANCO ---
@@ -44,7 +44,7 @@ BANNER_HTML = """
 
 SIDEBAR_HTML = """
 <div style="background-color: #FFD54F; color: black; padding: 15px; border-radius: 10px; border-left: 5px solid #382c04; font-size: 14px; line-height: 1.5;">
-    <b>⚠ Requisito ⚠:</b><br>
+    <b>Requisito:</b><br>
     Envie uma mensagem para o <b>CallMeBot (+34 644 87 21 57)</b> e mande o texto: <br>
     <b>'I allow callmebot to send me messages'</b> <br>
     no WhatsApp, para permitir que o PriceStalker funcione corretamente.
@@ -80,6 +80,37 @@ def sanitize_phone(phone_input):
     if len(only_nums) >= 10 and len(only_nums) <= 11:
         only_nums = "55" + only_nums
     return only_nums
+
+def validate_email(email):
+    """Verifica se o texto tem formato de e-mail (algo@algo.algo)"""
+    pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
+    return re.match(pattern, email) is not None
+
+def clean_url_visual(url):
+    """Encurta a URL apenas para exibição visual"""
+    try:
+        # Remove parâmetros de rastreamento
+        if "?" in url: url = url.split("?")[0]
+        
+        # Lógica Amazon (Deixa bem curtinho)
+        if "amazon" in url and "/dp/" in url:
+            asin = url.split("/dp/")[1].split("/")[0]
+            return f"amazon.com.br/dp/{asin}..."
+            
+        # Lógica Mercado Livre
+        if "mercadolivre" in url:
+            # Tenta pegar o nome do produto na URL
+            parts = url.split(".com.br/")
+            if len(parts) > 1:
+                return f"mercadolivre.com.br/{parts[1][:30]}..."
+                
+        # Genérico (Corta se for muito grande)
+        if len(url) > 50:
+            return url[:47] + "..."
+            
+        return url
+    except:
+        return "Link do Produto"
 
 def get_price_history_df(product_id):
     conn = get_db_connection()
@@ -129,50 +160,51 @@ if st.session_state['user_id'] is None:
         st.subheader("Novo Cadastro")
         new_name = st.text_input("Seu Nome")
         new_email = st.text_input("Seu E-mail")
+        st.caption("Utilize um e-mail válido para recuperação de conta.") 
         
-        # --- SEÇÃO WHATSAPP ---
         st.write("WhatsApp para Notificações")
         col_ddd, col_num = st.columns([1, 4])
-        
         with col_ddd:
             st.text_input("DDD", value="+55", disabled=True, label_visibility="collapsed")
         with col_num:
             phone_raw = st.text_input("Número", placeholder="(21) 99999-8888", label_visibility="collapsed")
-        
-        # --- NOVA SEÇÃO: API KEY DO CALLMEBOT ---
+        st.caption("Apenas números com DDD. Ex: (11) 99999-8888")
+
         st.markdown("---")
         st.markdown("##### 🔑 Chave de Acesso (Obrigatório)")
         
         st.info(
             """
-            Para o robô conseguir te enviar mensagens, você precisa autorizar:
-            1. Adicione o número **+34 644 87 21 57** (CallMeBot) nos seus contatos.
+            1. Adicione **+34 644 87 21 57** (CallMeBot) nos contatos.
             2. Mande a mensagem: `I allow callmebot to send me messages`
-            3. Ele vai responder com sua **API Key** (uma sequência de números).
-            4. **Cole a API Key abaixo:**
+            3. Cole o código numérico recebido abaixo.
             """
         )
         
         user_api_key = st.text_input("Sua API Key CallMeBot", placeholder="Ex: 8692414")
-        # ----------------------------------------
+        if user_api_key and not user_api_key.isdigit():
+            st.caption("⚠️ :red[A chave deve conter apenas números!]")
+        else:
+            st.caption("O código que o bot te enviou no WhatsApp (apenas números).")
 
         st.markdown("---")
         new_pass = st.text_input("Escolha uma Senha", type="password")
+        st.caption("Use uma senha segura.")
         
         if st.button("Cadastrar"):
             clean_phone = sanitize_phone(phone_raw)
             
-            if len(clean_phone) < 12:
-                 st.error("Número de telefone inválido. Digite DDD + Número.")
-            
-            # VERIFICA SE PREENCHEU TUDO, INCLUINDO A KEY
-            elif new_email and new_pass and new_name and user_api_key:
+            if not new_name or not new_email or not new_pass or not user_api_key:
+                st.warning("Por favor, preencha todos os campos.")
+            elif not validate_email(new_email):
+                st.error("Formato de e-mail inválido.")
+            elif len(clean_phone) < 12:
+                 st.error("Número de telefone inválido.")
+            elif not user_api_key.isdigit():
+                st.error("A API Key deve conter apenas números.")
+            else:
                 hashed = hash_password(new_pass)
-                
-                # --- AQUI ENVIAMOS A KEY PARA O BANCO ---
-                # Certifique-se que sua função create_user no database.py aceita 5 argumentos!
                 uid = create_user(new_name, new_email, hashed, clean_phone, user_api_key)
-                
                 if uid:
                     st.session_state['user_id'] = uid
                     st.session_state['user_name'] = new_name
@@ -180,27 +212,20 @@ if st.session_state['user_id'] is None:
                     st.rerun()
                 else:
                     st.error("Erro ao criar conta. E-mail já existe?")
-            else:
-                st.warning("Por favor, preencha todos os campos, incluindo a API Key.")
 
 # --- ÁREA LOGADA ---
 else:
-    # --- BARRA LATERAL (PERFIL) ---
+    # BARRA LATERAL
     with st.sidebar:
-        
         user_data = get_user_info(st.session_state['user_id'])
-        
         if user_data:
             u_name, u_email, u_phone, u_key = user_data
             
             if 'editing_profile' not in st.session_state:
                 st.session_state['editing_profile'] = False
 
-            # --- MODO VISUALIZAÇÃO ---
             if not st.session_state['editing_profile']:
                 st.markdown(f"### 👋 Olá, {u_name.split()[0]}!")
-                
-                # CORREÇÃO: O HTML aqui dentro está colado na esquerda (sem espaços antes das tags)
                 st.markdown(
                     f"""
 <div style="background-color: #1e2530; padding: 15px; border-radius: 10px; border: 1px solid #333; margin-bottom: 10px;">
@@ -214,12 +239,9 @@ else:
 """, 
                     unsafe_allow_html=True
                 )
-                
                 if st.button("✏️ Editar Perfil"):
                     st.session_state['editing_profile'] = True
                     st.rerun()
-
-            # --- MODO EDIÇÃO ---
             else:
                 st.markdown("### ✏️ Editando Perfil")
                 with st.form("edit_profile_form"):
@@ -228,10 +250,7 @@ else:
                     new_u_phone = st.text_input("WhatsApp (55...)", value=u_phone)
                     new_u_key = st.text_input("API Key CallMeBot", value=u_key if u_key else "")
                     
-                    col_save, col_cancel = st.columns(2)
-                    saved = col_save.form_submit_button("💾 Salvar")
-                    
-                    if saved:
+                    if st.form_submit_button("💾 Salvar"):
                         clean_phone = sanitize_phone(new_u_phone)
                         if update_user_profile(st.session_state['user_id'], new_u_name, new_u_email, clean_phone, new_u_key):
                             st.success("Perfil atualizado!")
@@ -249,12 +268,9 @@ else:
         if st.button("Sair"):
             st.session_state['user_id'] = None
             st.rerun()
-            
         st.markdown(SIDEBAR_HTML, unsafe_allow_html=True)
     
     st.title("🕵️ Painel de Controle")
-
-    # BANNER EXPLICATIVO
     st.markdown(BANNER_HTML, unsafe_allow_html=True)
 
     # FORMULÁRIO
@@ -263,10 +279,8 @@ else:
             col1, col2 = st.columns(2)
             name = col1.text_input("Nome do Produto")
             url = col2.text_input("URL do Produto")
-            
             col3, col4 = st.columns(2)
             target = col3.number_input("Preço Alvo (R$)", min_value=0.0)
-            
             format_func = lambda x: f"{x} hora (Recomendado) ⭐" if x == 1 else f"{x} horas"
             interval = col4.selectbox("Checar a cada:", [1, 6, 12, 24], format_func=format_func)
             
@@ -278,140 +292,122 @@ else:
                 else:
                     st.warning("Preencha os dados corretamente.")
 
-    # LISTA E GRÁFICOS
+    # --- ÁREA DE GESTÃO DE PRODUTOS (MASTER-DETAIL) ---
     st.markdown("---")
     st.subheader("📋 Meus Produtos Monitorados")
 
     user_products = get_products_by_user(st.session_state['user_id'])
     
     if user_products:
-        for prod in user_products:
+        product_map = {prod[1]: prod for prod in user_products}
+        
+        selected_product_name = st.selectbox(
+            "Selecione o produto para gerenciar:", 
+            list(product_map.keys()),
+            index=None,
+            placeholder="Escolha um produto na lista..."
+        )
+        
+        if selected_product_name:
+            prod = product_map[selected_product_name]
             p_id, p_name, p_url, p_target, p_interval = prod
             
-            with st.expander(f"📦 {p_name} (Meta: R$ {p_target})", expanded=False):
+            with st.container(border=True):
                 
-                c_edit, c_del = st.columns([4, 1])
+                c_title, c_del = st.columns([12, 1])
+                with c_title:
+                    st.markdown(f"### 📦 {p_name}")
+                with c_del:
+                    if st.button("🗑️", key=f"del_{p_id}", type="primary", help="Excluir este produto"):
+                        if delete_product(p_id):
+                            st.rerun()
+
+                # --- MUDANÇA AQUI: Link Encurtado e Clicável ---
+                short_link = clean_url_visual(p_url)
+                st.markdown(f"🔗 **Link:** [{short_link}]({p_url})")
+                # -----------------------------------------------
                 
-                with c_edit:
+                st.write("")
+
+                c_spacer, c_img, c_dados = st.columns([0.2, 2, 5]) 
+                
+                with c_img:
+                    st.image("https://cdn-icons-png.flaticon.com/512/679/679720.png", width=130, caption="Produto")
+
+                with c_dados:
                     st.markdown("#### ✏️ Editar Detalhes")
-                    ec1, ec2, ec3 = st.columns([3, 3, 2])
+                    ed_name = st.text_input("Nome do Produto", value=p_name, key=f"name_{p_id}")
+                    ed_url = st.text_input("URL do Produto", value=p_url, key=f"url_{p_id}")
                     
-                    ed_name = ec1.text_input("Nome", value=p_name, key=f"name_{p_id}")
-                    ed_url = ec2.text_input("URL", value=p_url, key=f"url_{p_id}")
-                    ed_target = ec3.number_input("Meta (R$)", value=float(p_target), step=10.0, key=f"tgt_{p_id}")
-                    
-                    save_col1, save_col2 = st.columns([5, 1])
-                    with save_col2:
-                        st.write("") 
-                        st.write("") 
-                        if st.button("💾 Salvar", key=f"save_{p_id}"):
+                    c_meta, c_save = st.columns([3, 1.5])
+                    with c_meta:
+                        ed_target = st.number_input("Meta de Preço (R$)", value=float(p_target), step=10.0, key=f"tgt_{p_id}")
+                    with c_save:
+                        st.markdown("<div style='height: 29px'></div>", unsafe_allow_html=True)
+                        if st.button("💾 Salvar", key=f"save_{p_id}", use_container_width=True):
                             if update_product_full(p_id, ed_name, ed_url, ed_target):
-                                st.success("Atualizado!")
+                                st.success("Salvo!")
                                 st.rerun()
                             else:
                                 st.error("Erro.")
 
-                with c_del:
-                    st.write("") 
-                    st.write("") 
-                    if st.button("🗑️", key=f"del_{p_id}", type="primary", help="Excluir"):
-                        if delete_product(p_id):
-                            st.rerun()
-
-                # --- 4. GRÁFICO AVANÇADO (ZONA VERDE/VERMELHA) ---
                 st.markdown("---")
-                st.markdown("#### 📊 Análise de Meta vs. Preço")
+                st.markdown("#### 📊 Histórico de Variação")
                 
                 df_hist = get_price_history_df(p_id)
                 
                 if not df_hist.empty:
-                    # Tratamento de Dados (Média Diária)
+                    # --- NOVIDADE: KPIs (MÉDIA, MÍNIMO, MÁXIMO) ---
+                    media = df_hist['price'].mean()
+                    minimo = df_hist['price'].min()
+                    maximo = df_hist['price'].max()
+                    
+                    kpi1, kpi2, kpi3 = st.columns(3)
+                    kpi1.metric("🏷️ Preço Médio", f"R$ {media:.2f}")
+                    kpi2.metric("📉 Mínimo Histórico", f"R$ {minimo:.2f}")
+                    kpi3.metric("📈 Máximo Histórico", f"R$ {maximo:.2f}")
+                    
+                    st.write("") # Espaçamento visual antes do gráfico
+                    # ----------------------------------------------
+
                     df_hist['scraped_at'] = pd.to_datetime(df_hist['scraped_at'])
                     df_hist['date_obj'] = df_hist['scraped_at'].dt.date
                     df_daily = df_hist.groupby('date_obj')['price'].mean().reset_index()
                     df_daily = df_daily.sort_values('date_obj')
                     df_daily['dia_str'] = pd.to_datetime(df_daily['date_obj']).dt.strftime('%d/%m')
                     
-                    # Definição do Limite Superior do Gráfico
-                    # (Pega o maior valor entre o preço máximo e a meta, e dá 20% de margem)
                     max_y_val = max(df_daily['price'].max(), float(p_target)) * 1.2
                     
-                    # --- CRIAÇÃO DO GRÁFICO COM GO (Graph Objects) ---
                     fig = go.Figure()
 
-                    # 1. Zonas de Fundo (O Segredo!)
-                    # Zona Verde (De 0 até a Meta) -> Bom pra comprar
-                    fig.add_shape(
-                        type="rect",
-                        xref="paper", yref="y",
-                        x0=0, y0=0, x1=1, y1=p_target,
-                        fillcolor="rgba(114, 252, 195, 0.1)", # Verde transparente
-                        layer="below", line_width=0,
-                    )
+                    fig.add_shape(type="rect", xref="paper", yref="y", x0=0, y0=0, x1=1, y1=p_target,
+                        fillcolor="rgba(114, 252, 195, 0.0)", layer="below", line_width=0)
                     
-                    # Zona Vermelha (Da Meta até o Infinito) -> Caro
-                    fig.add_shape(
-                        type="rect",
-                        xref="paper", yref="y",
-                        x0=0, y0=p_target, x1=1, y1=max_y_val,
-                        fillcolor="rgba(252, 146, 114, 0.1)", # Vermelho transparente
-                        layer="below", line_width=0,
-                    )
+                    fig.add_shape(type="rect", xref="paper", yref="y", x0=0, y0=p_target, x1=1, y1=max_y_val,
+                        fillcolor="rgba(252, 146, 114, 0.0)", layer="below", line_width=0)
+
                     for index, row in df_daily.iterrows():
-                        # Define a cor: Verde se barato, Vermelho se caro
-                        cor_linha = "rgba(0, 200, 83, 0.4)" if row['price'] <= p_target else "rgba(255, 0, 0, 0.4)"
-                        
-                        fig.add_shape(
-                            type="line",
-                            x0=row['dia_str'], 
-                            y0=p_target,      # Parte da Meta
-                            x1=row['dia_str'], 
-                            y1=row['price'],  # Vai até o Preço
-                            line=dict(
-                                color=cor_linha, # Usa a cor que decidimos acima
-                                width=2, 
-                                dash="dot"
-                            ),
-                            layer="below"
-                        )
-                    # 2. Linha do Preço
-                    fig.add_trace(go.Scatter(
-                        x=df_daily['dia_str'], 
-                        y=df_daily['price'],
-                        mode='lines+markers+text',
-                        name='Preço',
-                        line=dict(color="#e7e7fc", width=1),
-                        marker=dict(size=3, color='#cacafa'),
-                        text=df_daily['price'].apply(lambda x: f"{x:.2f}"),
-                        textposition="top center"
+                        fig.add_shape(type="line", x0=row['dia_str'], y0=p_target, x1=row['dia_str'], y1=row['price'],
+                            line=dict(color="rgba(202, 202, 250, 0.3)", width=0, dash="dot"), layer="below")
+
+                    cores_barras = ['#00C853' if x <= float(p_target) else '#D32F2F' for x in df_daily['price']]
+                    
+                    fig.add_trace(go.Bar(
+                        x=df_daily['dia_str'], y=df_daily['price'],
+                        name='Preço', marker_color=cores_barras, width=0.8,
+                        text=df_daily['price'].apply(lambda x: f"{x:.2f}"), textposition='outside'
                     ))
 
-                    # 3. Linha da Meta (Referência Forte)
-                    fig.add_hline(
-                        y=p_target, 
-                        line_dash="solid", 
-                        line_color="#cacafa", 
-                        line_width=2,
-                        annotation_text=f"<b>META: R$ {p_target}</b>", 
-                        annotation_position="bottom right",
-                        annotation_font_color="#cacafa"
-                    )
+                    fig.add_hline(y=p_target, line_dash="dash", line_color="#FFFFFF", line_width=0.6,
+                        annotation_text=f"<b>META: R$ {p_target}</b>", annotation_position="bottom right", annotation_font_color="#FFFFFF")
 
-                    # Ajustes de Layout
-                    fig.update_layout(
-                        yaxis_range=[0, max_y_val],
-                        yaxis_title="Preço (R$)",
-                        xaxis_title=None,
-                        plot_bgcolor="rgba(0,0,0,0)",
-                        margin=dict(t=30, b=30, l=30, r=30),
-                        showlegend=False,
-                        hovermode="x unified"
-                    )
+                    fig.update_layout(yaxis_range=[0, max_y_val], yaxis_title="Preço (R$)", xaxis_title=None,
+                        plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=30, b=30, l=30, r=30), showlegend=False, hovermode="x unified")
                     
                     st.plotly_chart(fig, use_container_width=True)
                 else:
-                    st.info("Aguardando a primeira leitura do robô... 🤖")
-
+                    st.info("Aguardando a primeira leitura do robô para gerar gráfico... 🤖")
+    
     else:
         st.info("Você ainda não monitora nenhum produto. Adicione um acima! ☝️")
 

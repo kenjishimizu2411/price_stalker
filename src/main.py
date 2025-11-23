@@ -15,8 +15,6 @@ from src.database import get_db_connection, get_due_products, update_last_checke
 from src.scraper import Scraper
 from src.whatsapp import send_whatsapp_message
 
-# OBS: Removemos a MY_API_KEY global pois agora vem do banco de dados de cada usuário!
-
 def clean_url_for_whatsapp(url):
     """Limpa a URL para não quebrar o CallMeBot"""
     if "?" in url: url = url.split("?")[0]

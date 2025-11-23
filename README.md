@@ -121,5 +121,5 @@ Este projeto é uma demonstração de engenharia de software e automação.
 ---
 
 <p align="center">
-Developed with 💙 by <strong>Kenji Shimizu</strong>
+Developed by <strong>Kenji Shimizu</strong>
 </p>
