@@ -35,6 +35,8 @@ class Scraper:
                 price = self._extract_amazon()
             elif "mercadolivre" in url:
                 price = self._extract_mercadolivre()
+            elif "technos" in url:
+                price = self._extract_technos()
             else:
                 print("❌ Loja não suportada.")
                 return None
@@ -133,6 +135,56 @@ class Scraper:
 
         except Exception as e:
             print(f"⚠️ Erro genérico na extração ML: {e}")
+            return None
+
+    def _extract_technos(self):
+        try:
+            print("   -> Analisando Technos (Plataforma VTEX)...")
+            
+            try:
+                json_scripts = self.driver.find_elements(By.XPATH, '//script[@type="application/ld+json"]')
+                for script in json_scripts:
+                    content = script.get_attribute('innerHTML')
+                    if "offers" in content:
+                        data = json.loads(content)
+                        if isinstance(data, list): data = data[0]
+                        
+                        if 'offers' in data:
+                            price = data['offers'].get('price')
+                            if price:
+                                print(f"   -> Achei via JSON-LD: {price}")
+                                return float(price)
+            except Exception as e:
+                print(f"   -> JSON falhou, tentando próximo: {e}")
+
+            try:
+                meta_price = self.driver.find_element(By.CSS_SELECTOR, 'meta[property="product:price:amount"]')
+                if meta_price:
+                    content = meta_price.get_attribute("content")
+                    print(f"   -> Achei via Meta Tag: {content}")
+                    return float(content)
+            except:
+                pass
+
+            selectors = [
+                '.skuBestPrice',           
+                '.best-price',             
+                '.product-fixed-price'     
+            ]
+            
+            for sel in selectors:
+                try:
+                    element = self.driver.find_element(By.CSS_SELECTOR, sel)
+                    if element:
+                        print(f"   -> Achei via CSS: {sel}")
+                        return self._clean_price(element.text)
+                except:
+                    continue
+
+            return None
+
+        except Exception as e:
+            print(f"⚠️ Erro Technos: {e}")
             return None
 
     def _clean_price(self, raw_price):
