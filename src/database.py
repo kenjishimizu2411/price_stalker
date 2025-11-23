@@ -6,13 +6,11 @@ load_dotenv()
 
 def get_db_connection():
     try:
-        # Tenta pegar a URL completa (Padrão Nuvem)
         database_url = os.getenv('DATABASE_URL')
         
         if database_url:
             return psycopg2.connect(database_url)
         
-        # Se não tiver URL, tenta o modo antigo (Localhost)
         return psycopg2.connect(
             dbname=os.getenv('DB_NAME'),
             user=os.getenv('DB_USER'),
@@ -24,15 +22,13 @@ def get_db_connection():
         print(f"Erro conexão: {e}")
         return None
 
-# --- NOVAS FUNÇÕES DE USUÁRIO ---
 
-def create_user(name, email, password_hash, phone, api_key): # <--- 5º Argumento aqui!
+def create_user(name, email, password_hash, phone, api_key):
     conn = get_db_connection()
     if not conn: return False
     try:
         cur = conn.cursor()
         cur.execute(
-            # Adicionei a coluna whatsapp_api_key e o %s extra
             "INSERT INTO users (name, email, password_hash, phone, whatsapp_api_key) VALUES (%s, %s, %s, %s, %s) RETURNING id",
             (name, email, password_hash, phone, api_key)
         )
@@ -50,15 +46,12 @@ def get_user_by_email(email):
     if not conn: return None
     try:
         cur = conn.cursor()
-        # Busca o usuário pelo email
         cur.execute("SELECT id, name, email, password_hash, phone FROM users WHERE email = %s", (email,))
-        return cur.fetchone() # Retorna a tupla ou None
+        return cur.fetchone()
     except Exception:
         return None
     finally:
         conn.close()
-
-# --- FUNÇÕES DE PRODUTO ATUALIZADAS ---
 
 def add_product(user_id, name, url, target_price, interval):
     conn = get_db_connection()
@@ -90,7 +83,6 @@ def get_due_products():
     if not conn: return []
     try:
         cur = conn.cursor()
-        # Adicionei u.whatsapp_api_key no final
         query = """
         SELECT p.id, p.name, p.url, p.target_price, u.phone, u.name, u.whatsapp_api_key
         FROM products p
@@ -140,9 +132,7 @@ def delete_product(product_id):
     if not conn: return
     try:
         cur = conn.cursor()
-        # Primeiro remove o histórico (porque depende do produto)
         cur.execute("DELETE FROM price_history WHERE product_id = %s", (product_id,))
-        # Depois remove o produto
         cur.execute("DELETE FROM products WHERE id = %s", (product_id,))
         conn.commit()
         return True
@@ -159,7 +149,7 @@ def get_user_info(user_id):
     try:
         cur = conn.cursor()
         cur.execute("SELECT name, email, phone, whatsapp_api_key FROM users WHERE id = %s", (user_id,))
-        return cur.fetchone() # Retorna tupla: (Nome, Email, Fone, Key)
+        return cur.fetchone()
     except Exception as e:
         print(f"Erro ao buscar user: {e}")
         return None

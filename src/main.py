@@ -4,12 +4,10 @@ import time
 from datetime import datetime
 from dotenv import load_dotenv
 
-# --- CONFIGURAÇÃO DE CAMINHOS BLINDADA ---
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(current_dir, '..'))
 dotenv_path = os.path.join(current_dir, '..', '.env')
 load_dotenv(dotenv_path)
-# -----------------------------------------
 
 from src.database import get_db_connection, get_due_products, update_last_checked
 from src.scraper import Scraper
@@ -32,7 +30,6 @@ def clean_url_for_whatsapp(url):
 def job_saas():
     print(f"\n🔄 [SaaS] PriceStalker: {datetime.now().strftime('%H:%M:%S')}")
     
-    # Essa função agora retorna 7 colunas (incluindo user_apikey)
     tasks = get_due_products()
 
     if not tasks:
@@ -46,7 +43,6 @@ def job_saas():
     cursor = conn.cursor()
 
     for task in tasks:
-        # --- MUDANÇA AQUI: Desempacotando a user_apikey ---
         prod_id, prod_name, url, target, user_phone, user_name, user_apikey = task
 
         target_float = float(target)
@@ -67,10 +63,8 @@ def job_saas():
 
                 print(f" R$ {current_price}", end='')
 
-                # -------- PREÇO ABAIXO DO ALVO --------
                 if current_price <= target_float:
                     
-                    # Só tenta enviar se o usuário tiver API Key cadastrada
                     if user_apikey:
                         print(" 🚨 PREÇO BAIXO! ENVIANDO...")
                         short_url = clean_url_for_whatsapp(url)
@@ -85,14 +79,12 @@ def job_saas():
                             f"👉 *Garanta aqui:* {short_url}"
                         )
 
-                        # Usa a user_apikey específica deste usuário
                         success = send_whatsapp_message(phone_clean, msg, user_apikey)
                         if not success:
                             print("      ❌ Falha no envio do Zap (Verifique chave/fone)")
                     else:
                         print("      ⚠️ Usuário sem API Key. Não notificado.")
 
-                # -------- PREÇO PERTO DO ALVO (15%) --------
                 elif current_price <= (target_float * 1.15):
                     
                     if user_apikey:

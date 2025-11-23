@@ -4,7 +4,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 import re
 
-# --- IMPORTANTO AS FUNÇÕES DO BANCO ---
 from database import (
     get_db_connection, 
     create_user, 
@@ -18,12 +17,7 @@ from database import (
 )
 from auth import hash_password, check_password
 
-# --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="PriceStalker SaaS", page_icon="🕵️", layout="wide")
-
-# ==================================================
-# HTML / CSS PERSONALIZADO
-# ==================================================
 
 BANNER_HTML = """
 <div style="background-color: #0a2742; color: white; padding: 25px; border-radius: 12px; border-left: 6px solid #1a4c8f; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); margin-bottom: 20px;">
@@ -71,10 +65,6 @@ FOOTER_STYLE = """
 <div class="footer">Developed with 💙 by Kenji Shimizu</div>
 """
 
-# ==================================================
-# FUNÇÕES AUXILIARES
-# ==================================================
-
 def sanitize_phone(phone_input):
     only_nums = re.sub(r'\D', '', phone_input)
     if len(only_nums) >= 10 and len(only_nums) <= 11:
@@ -89,22 +79,17 @@ def validate_email(email):
 def clean_url_visual(url):
     """Encurta a URL apenas para exibição visual"""
     try:
-        # Remove parâmetros de rastreamento
         if "?" in url: url = url.split("?")[0]
         
-        # Lógica Amazon (Deixa bem curtinho)
         if "amazon" in url and "/dp/" in url:
             asin = url.split("/dp/")[1].split("/")[0]
             return f"amazon.com.br/dp/{asin}..."
             
-        # Lógica Mercado Livre
         if "mercadolivre" in url:
-            # Tenta pegar o nome do produto na URL
             parts = url.split(".com.br/")
             if len(parts) > 1:
                 return f"mercadolivre.com.br/{parts[1][:30]}..."
                 
-        # Genérico (Corta se for muito grande)
         if len(url) > 50:
             return url[:47] + "..."
             
@@ -124,16 +109,11 @@ def get_price_history_df(product_id):
     finally:
         conn.close()
 
-# ==================================================
-# LÓGICA PRINCIPAL
-# ==================================================
-
 if 'user_id' not in st.session_state:
     st.session_state['user_id'] = None
 if 'user_name' not in st.session_state:
     st.session_state['user_name'] = None
 
-# --- TELA DE LOGIN / CADASTRO ---
 if st.session_state['user_id'] is None:
     st.title("🕵️ Bem-vindo ao PriceStalker")
     
@@ -213,9 +193,7 @@ if st.session_state['user_id'] is None:
                 else:
                     st.error("Erro ao criar conta. E-mail já existe?")
 
-# --- ÁREA LOGADA ---
 else:
-    # BARRA LATERAL
     with st.sidebar:
         user_data = get_user_info(st.session_state['user_id'])
         if user_data:
@@ -273,7 +251,6 @@ else:
     st.title("🕵️ Painel de Controle")
     st.markdown(BANNER_HTML, unsafe_allow_html=True)
 
-    # FORMULÁRIO
     with st.expander("➕ Adicionar Novo Monitoramento", expanded=False):
         with st.form("add_prod", clear_on_submit=True):
             col1, col2 = st.columns(2)
@@ -281,8 +258,8 @@ else:
             url = col2.text_input("URL do Produto")
             col3, col4 = st.columns(2)
             target = col3.number_input("Preço Alvo (R$)", min_value=0.0)
-            format_func = lambda x: f"{x} hora (Recomendado) ⭐" if x == 1 else f"{x} horas"
-            interval = col4.selectbox("Checar a cada:", [1, 6, 12, 24], format_func=format_func)
+            format_func = lambda x: f"{x} horas (Recomendado) ⭐" if x == 12 else f"{x} horas"
+            interval = col4.selectbox("Checar a cada:", [12, 24, 6, 1], format_func=format_func)
             
             if st.form_submit_button("Salvar Monitoramento"):
                 if name and url and target > 0:
@@ -292,7 +269,6 @@ else:
                 else:
                     st.warning("Preencha os dados corretamente.")
 
-    # --- ÁREA DE GESTÃO DE PRODUTOS (MASTER-DETAIL) ---
     st.markdown("---")
     st.subheader("📋 Meus Produtos Monitorados")
 
@@ -322,10 +298,8 @@ else:
                         if delete_product(p_id):
                             st.rerun()
 
-                # --- MUDANÇA AQUI: Link Encurtado e Clicável ---
                 short_link = clean_url_visual(p_url)
                 st.markdown(f"🔗 **Link:** [{short_link}]({p_url})")
-                # -----------------------------------------------
                 
                 st.write("")
 
@@ -357,7 +331,6 @@ else:
                 df_hist = get_price_history_df(p_id)
                 
                 if not df_hist.empty:
-                    # --- NOVIDADE: KPIs (MÉDIA, MÍNIMO, MÁXIMO) ---
                     media = df_hist['price'].mean()
                     minimo = df_hist['price'].min()
                     maximo = df_hist['price'].max()
@@ -367,8 +340,7 @@ else:
                     kpi2.metric("📉 Mínimo Histórico", f"R$ {minimo:.2f}")
                     kpi3.metric("📈 Máximo Histórico", f"R$ {maximo:.2f}")
                     
-                    st.write("") # Espaçamento visual antes do gráfico
-                    # ----------------------------------------------
+                    st.write("") 
 
                     df_hist['scraped_at'] = pd.to_datetime(df_hist['scraped_at'])
                     df_hist['date_obj'] = df_hist['scraped_at'].dt.date

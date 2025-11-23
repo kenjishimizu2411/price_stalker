@@ -15,13 +15,12 @@ def send_telegram_message(message):
         print("⚠️ Erro: Token ou Chat ID do Telegram não configurados no .env")
         return
 
-    # URL Mágica da API do Telegram
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     
     data = {
         "chat_id": chat_id,
         "text": message,
-        "parse_mode": "Markdown" # Permite usar negrito, itálico, etc.
+        "parse_mode": "Markdown"
     }
 
     try:
@@ -33,6 +32,5 @@ def send_telegram_message(message):
     except Exception as e:
         print(f"❌ Erro de conexão com Telegram: {e}")
 
-# Teste rápido (só roda se executar esse arquivo)
 if __name__ == "__main__":
     send_telegram_message("🚀 Teste do PriceStalker: Olá, Mestre Kenji!")

@@ -9,48 +9,27 @@ import json
 
 class Scraper:
     def __init__(self):
-        chrome_options = Options()
-        
-        # --- CONFIGURAÇÃO "STEALTH" (FURTIVA) ---
-        
-        # 1. Definições de Janela e Cabeça
+        chrome_options = Options()        
         chrome_options.add_argument("--start-maximized")
-        chrome_options.add_argument("--headless=new") # O modo novo é vital
+        chrome_options.add_argument("--headless=new")
         chrome_options.add_argument("--window-size=1920,1080")
-
-        # --- FLAGS ESSENCIAIS PARA RODAR NO GITHUB ACTIONS (LINUX) ---
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument("--disable-gpu")
-        
-        # 2. O TRUQUE DO IDIOMA (Resolve o erro em espanhol)
-        # Diz ao site que somos brasileiros e aceitamos português
         chrome_options.add_argument("--lang=pt-BR")
         chrome_options.add_argument("--accept-lang=pt-BR")
-
-        # 3. Remove a barra "Chrome está sendo controlado por software de teste"
-        # Isso remove bandeiras internas que sites usam para detectar robôs
         chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        chrome_options.add_experimental_option('useAutomationExtension', False)
-        
-        # 4. User-Agent Genérico e Moderno
-        # Vamos usar um bem comum para nos misturarmos na multidão
+        chrome_options.add_experimental_option('useAutomationExtension', False)  
         user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
         chrome_options.add_argument(f'user-agent={user_agent}')
-        
         chrome_options.add_argument("--log-level=3")
-        
         self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
-        
-        # Truque extra: altera uma propriedade interna do navegador para esconder o Selenium
         self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
         
     def get_price(self, url):
         try:
             self.driver.get(url)
             sleep(12) 
-            
-            # --- LÓGICA DE DECISÃO ---
             price = None
             if "amazon" in url:
                 price = self._extract_amazon()
@@ -60,11 +39,8 @@ class Scraper:
                 print("❌ Loja não suportada.")
                 return None
             
-            # --- DEBUG VISUAL NA NUVEM ---
-            # Se não achou o preço, tira uma foto para sabermos o porquê
             if price is None:
                 print("📸 Não achei o preço. Tirando print de diagnóstico...")
-                # Cria um nome de arquivo limpo
                 filename = f"erro_{url.split('//')[1].split('/')[0]}.png"
                 self.driver.save_screenshot(filename)
             
@@ -77,35 +53,28 @@ class Scraper:
 
     def _extract_amazon(self):
         try:
-            # --- TENTATIVA DE BYPASS (FURAR BLOQUEIO) ---
-            # Verifica se caiu na tela de "Clique no botão..."
             if "continuar comprando" in self.driver.page_source:
                 print("🐶 Bloqueio 'Soft' da Amazon detectado. Tentando furar...")
                 try:
-                    # Tenta achar o botão pelo texto ou tag
-                    # Geralmente é um botão simples
                     botoes = self.driver.find_elements(By.TAG_NAME, "button")
                     for btn in botoes:
                         if "continuar comprando" in btn.text.lower():
                             btn.click()
                             print("   -> Botão clicado! Esperando recarregar...")
-                            sleep(3) # Espera a página verdadeira carregar
+                            sleep(6)
                             break
                 except Exception as e_bypass:
                     print(f"   -> Falha ao tentar clicar no botão: {e_bypass}")
 
-            # --- ROTINA NORMAL DE PREÇO ---
             elementos = self.driver.find_elements(By.CSS_SELECTOR, '.a-price-whole')
             if not elementos:
                 elementos = self.driver.find_elements(By.CSS_SELECTOR, '.a-offscreen')
             
             if not elementos: 
-                # Última tentativa: Às vezes o preço está num bloco diferente
                 elementos = self.driver.find_elements(By.ID, 'price_inside_buybox')
 
             if not elementos: return None
             
-            # Pega o texto (às vezes está oculto no textContent)
             raw_price = elementos[0].get_attribute("textContent")
             return self._clean_price(raw_price)
             
@@ -117,8 +86,6 @@ class Scraper:
         try:
             print("   -> Tentando estratégia JSON-LD (Dados Estruturados)...")
             
-            # --- ESTRATÉGIA 1: JSON-LD (Blindada) ---
-            # Note o 's' no final de elements. Isso impede o erro crítico.
             json_scripts = self.driver.find_elements(By.XPATH, '//script[@type="application/ld+json"]')
             
             if len(json_scripts) > 0:
@@ -126,7 +93,6 @@ class Scraper:
                     json_text = json_scripts[0].get_attribute('innerHTML')
                     data = json.loads(json_text)
                     
-                    # Lógica para caçar o preço dentro do dicionário
                     price = None
                     if 'offers' in data:
                         offers = data['offers']
@@ -143,14 +109,12 @@ class Scraper:
             
             print("   -> JSON falhou. Tentando Planos Visuais...")
 
-            # --- ESTRATÉGIA 2: Meta Tag (Plano B) ---
             meta_price = self.driver.find_elements(By.CSS_SELECTOR, "meta[itemprop='price']")
             if meta_price:
                 price = meta_price[0].get_attribute("content")
                 print(f"   -> SUCESSO via Meta Tag: {price}")
                 return float(price)
 
-            # --- ESTRATÉGIA 3: Visual (Plano C) ---
             selectors = [
                 '.ui-pdp-price__second-line .andes-money-amount__fraction',
                 '.andes-money-amount__fraction',
@@ -163,7 +127,6 @@ class Scraper:
                     print(f"   -> SUCESSO via Seletor CSS: {selector}")
                     return self._clean_price(elementos[0].text)
             
-            # Se chegou aqui, nada funcionou
             print("❌ Esgotei todas as tentativas no ML.")
             self.driver.save_screenshot("debug_ml_final.png")
             return None
@@ -176,9 +139,7 @@ class Scraper:
         """Função auxiliar para limpar R$ e vírgulas de qualquer loja"""
         if not raw_price: return None
         try:
-            # Remove tudo que não é numero ou virgula
             numeric_string = re.sub(r'[^\d,]', '', raw_price)
-            # Troca vírgula por ponto (1000,00 -> 1000.00)
             return float(numeric_string.replace(',', '.'))
         except:
             return None
