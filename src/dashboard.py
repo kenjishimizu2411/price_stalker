@@ -60,15 +60,15 @@ FOOTER_STYLE = """
     width: 100%;
     background-color: transparent;
     color: #808080;
-    text-align: right;
+    text-align: center;
     padding-right: 20px;
     padding-bottom: 10px;
-    font-size: 12px;
+    font-size: 10px;
     font-weight: bold;
     pointer-events: none; 
 }
 </style>
-<div class="footer">Developed by Kenji Shimizu</div>
+<div class="footer">Developed with 💙 by Kenji Shimizu</div>
 """
 
 # ==================================================
