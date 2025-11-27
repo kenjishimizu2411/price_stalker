@@ -1,6 +1,6 @@
 # 📉 PriceStalker V2.0 (SaaS Cloud Native)
 
-> **Plataforma de Monitoramento de Preços Inteligente** totalmente baseada em nuvem, com arquitetura distribuída e notificações via WhatsApp.
+> **Intelligent Price Monitoring Platform** | 100% Cloud-based, Distributed Architecture & WhatsApp Notifications.
 
 ![Status](https://img.shields.io/badge/Status-Online-success?style=for-the-badge)
 ![Python](https://img.shields.io/badge/Python-3.11-blue?style=for-the-badge&logo=python)
@@ -11,80 +11,79 @@
 ---
 
 ## 🚀 Live Demo
-Acesse a aplicação rodando em produção agora mesmo:
-### [🔗 CLIQUE AQUI PARA ACESSAR O PRICESTALKER](https://pricestalker.streamlit.app)
+Access the production application right now:
+### [🔗 CLICK HERE TO ACCESS PRICESTALKER](https://pricestalker.streamlit.app)
 
 ---
 
-## 💡 Sobre o Projeto
+## 💡 About the Project
 
-O **PriceStalker** evoluiu de um script local para um **SaaS (Software as a Service)** completo. Ele resolve o problema de monitorar preços em grandes e-commerces (Amazon & Mercado Livre) de forma autônoma.
+**PriceStalker** has evolved from a simple local script into a full **SaaS (Software as a Service)** solution. It solves the problem of monitoring prices on major e-commerce platforms (Amazon & Mercado Livre) autonomously.
 
-**Diferenciais da Versão 2.0:**
-1.  **100% Cloud:** Não depende mais da máquina do usuário ligada.
-2.  **Multi-Tenant:** Cada usuário tem sua conta, seus produtos e sua própria chave de API para notificações.
-3.  **Autônomo:** Um robô na nuvem verifica os preços de hora em hora e notifica apenas se houver oportunidade real.
+**V2.0 Key Differentiators:**
+1. **100% Cloud Native:** No dependency on local machines being turned on.
+2. **Multi-Tenant:** Each user has their own account, product list, and private API key for notifications.
+3. **Autonomous Worker:** A cloud robot checks prices hourly and triggers notifications only when a real opportunity is detected.
 
 ---
 
-## 🏗️ Arquitetura de Solução (Cloud Native)
+## 🏗️ Solution Architecture (Zero-Cost & Serverless)
 
-O projeto utiliza uma arquitetura moderna e desacoplada para garantir custo zero e alta disponibilidade:
+The project employs a modern, decoupled architecture to ensure high availability with zero infrastructure cost:
 
 ```mermaid
 graph TD
-    User["Usuário"] -->|Acessa| Frontend["Streamlit Cloud"]
-    Frontend -->|"Lê/Escreve"| DB[("Neon Serverless Postgres")]
-    
-    GitHub["GitHub Actions"] -->|"Cron Job (1h)"| Scraper["Robô Python"]
-    Scraper -->|Consulta| DB
+    User["User"] -->|Access| Frontend["Streamlit Cloud"]
+    Frontend -->|"Read/Write"| DB[("Neon Serverless Postgres")]
+    GitHub["GitHub Actions"] -->|"Cron Job (1h)"| Scraper["Python Worker"]
+    Scraper -->|Query| DB
     Scraper -->|Scraping| ECommerce["Amazon / Mercado Livre"]
-    Scraper -->|Notifica| WhatsApp["CallMeBot API"]
-    WhatsApp -->|Envia| UserPhone["Celular do Usuário"]
+    Scraper -->|Notify| WhatsApp["CallMeBot API"]
+    WhatsApp -->|Send Message| UserPhone["User's Mobile"]
 ```
 
 ### 🛠️ Tech Stack
 
-* **Frontend:** Streamlit hospedado no **Streamlit Community Cloud**.
-* **Database:** PostgreSQL Serverless hospedado na **Neon.tech** (AWS Region).
-* **Backend/Worker:** Python + Selenium rodando em containers Linux via **GitHub Actions** (CI/CD).
+* **Frontend:** Streamlit hosted on **Streamlit Community Cloud**.
+* **Database:** PostgreSQL Serverless hosted on **Neon.tech** (AWS Region).
+* **Backend/Worker:** Python + Selenium running on Linux containers via **GitHub Actions** (CI/CD).
 * **DevOps:**
-    * Deploy automático do Frontend via Git Push na branch `main`.
-    * Automação do Scraper via Cron Job (`hourly_check.yml`).
+    * Automatic Frontend Deploy via Git Push to `main`.
+    * Scraper Automation via Cron Job (`hourly_check.yml`).
 
 ---
 
 ## 📸 Screenshots
 
-### Painel de Controle (Dashboard)
+### Control Panel (Dashboard)
 ![Dashboard](https://github.com/kenjishimizu2411/price_stalker/blob/main/docs/tela_atual.PNG?raw=true)
-*Interface responsiva com gestão de produtos, gráficos históricos e modo noturno.*
+*Responsive interface with product management, historical charts, and dark mode.*
 
 ---
 
-## ⚙️ Funcionalidades Chave
+## ⚙️ Key Features
 
-* **Autenticação Segura:** Sistema de Login/Cadastro com hash de senha (`bcrypt`).
-* **Scraping Híbrido:**
-    * *Amazon:* Tratamento de seletores CSS e Headers anti-bot.
-    * *Mercado Livre:* Estratégia prioritária via JSON-LD (Dados estruturados) para precisão máxima.
-* **Smart Alerts:** O sistema calcula a economia real ("R$ 50,00 abaixo da meta") e envia links limpos e diretos no WhatsApp.
-* **Análise Gráfica:** Gráficos interativos (Plotly) mostram a evolução do preço x meta ao longo do tempo.
+* **Secure Authentication:** Login/Registration system with password hashing (`bcrypt`).
+* **Hybrid Scraping Engine:**
+    * *Amazon:* Handling of CSS selectors and Anti-bot Headers.
+    * *Mercado Livre:* Priority strategy using JSON-LD (Structured Data) for maximum precision.
+* **Smart Alerts:** The system calculates real savings ("$50.00 below target") and sends clean, direct links via WhatsApp.
+* **Data Visualization:** Interactive charts (Plotly) tracking Price vs. Target over time.
 
 ---
 
-## 💻 Como Rodar Localmente (Para Desenvolvedores)
+## 💻 Local Development Setup
 
-Se você deseja clonar e modificar o projeto:
+If you wish to clone and modify the project:
 
-### 1. Clone o Repositório
-```bash
+### 1. Clone the Repository
+'''bash
 git clone [https://github.com/kenjishimizu2411/price_stalker.git](https://github.com/kenjishimizu2411/price_stalker.git)
 cd price_stalker
-```
+'''
 
-### 2. Configure o Ambiente
-```bash
+### 2. Configure Environment
+'''bash
 python -m venv venv
 # Windows:
 venv\Scripts\activate
@@ -92,31 +91,31 @@ venv\Scripts\activate
 source venv/bin/activate
 
 pip install -r requirements.txt
-```
+'''
 
-### 3. Variáveis de Ambiente (.env)
-Crie um arquivo `.env` na raiz do projeto com a conexão do seu banco (Local ou Neon):
-```ini
-DATABASE_URL="postgres://usuario:senha@host:porta/banco"
-```
+### 3. Environment Variables (.env)
+Create a `.env` file in the root directory with your database connection string (Local or Neon):
+'''ini
+DATABASE_URL="postgres://user:password@host:port/database"
+'''
 
-### 4. Execute
-```bash
-# Rodar o Dashboard
+### 4. Run Application
+'''bash
+# Run the Dashboard
 streamlit run src/dashboard.py
 
-# Rodar o Robô (uma vez)
+# Run the Scraper (once)
 python src/main.py
-```
+'''
 
 ---
 
-## ⚖️ Aviso Legal
+## ⚖️ Legal Disclaimer
 
-Este projeto é uma demonstração de engenharia de software e automação. 
-* O **PriceStalker** não possui vínculo com as lojas monitoradas.
-* O uso de Web Scraping deve ser feito de forma ética e responsável.
-* As notificações dependem da disponibilidade da API de terceiros (CallMeBot).
+This project is a demonstration of software engineering and automation skills.
+* **PriceStalker** has no affiliation with the monitored stores.
+* Web Scraping must be performed ethically and responsibly.
+* Notifications depend on third-party API availability (CallMeBot).
 
 ---
 
