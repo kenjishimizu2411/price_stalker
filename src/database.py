@@ -84,7 +84,7 @@ def get_due_products():
     try:
         cur = conn.cursor()
         query = """
-        SELECT p.id, p.name, p.url, p.target_price, u.phone, u.name, u.whatsapp_api_key
+        SELECT p.id, p.name, p.url, p.target_price, u.phone, u.name, u.whatsapp_api_key, u.notify_daily_only, p.last_notified_at
         FROM products p
         JOIN users u ON p.user_id = u.id
         WHERE p.last_checked_at IS NULL 
@@ -143,12 +143,12 @@ def delete_product(product_id):
         conn.close()
 
 def get_user_info(user_id):
-    """Busca todos os dados do perfil do usuário"""
+
     conn = get_db_connection()
     if not conn: return None
     try:
         cur = conn.cursor()
-        cur.execute("SELECT name, email, phone, whatsapp_api_key FROM users WHERE id = %s", (user_id,))
+        cur.execute("SELECT name, email, phone, whatsapp_api_key, notify_daily_only FROM users WHERE id = %s", (user_id,))
         return cur.fetchone()
     except Exception as e:
         print(f"Erro ao buscar user: {e}")
@@ -156,22 +156,32 @@ def get_user_info(user_id):
     finally:
         conn.close()
 
-def update_user_profile(user_id, name, email, phone, api_key):
-    """Atualiza os dados cadastrais"""
+def update_user_profile(user_id, name, email, phone, api_key, daily_only):
+
     conn = get_db_connection()
     if not conn: return False
     try:
         cur = conn.cursor()
         cur.execute(
             """UPDATE users 
-               SET name = %s, email = %s, phone = %s, whatsapp_api_key = %s 
+               SET name = %s, email = %s, phone = %s, whatsapp_api_key = %s, notify_daily_only = %s 
                WHERE id = %s""",
-            (name, email, phone, api_key, user_id)
+            (name, email, phone, api_key, daily_only, user_id)
         )
         conn.commit()
         return True
     except Exception as e:
         print(f"Erro ao atualizar perfil: {e}")
         return False
+    finally:
+        conn.close()
+
+def update_last_notified(product_id):
+    conn = get_db_connection()
+    if not conn: return
+    try:
+        cur = conn.cursor()
+        cur.execute("UPDATE products SET last_notified_at = NOW() WHERE id = %s", (product_id,))
+        conn.commit()
     finally:
         conn.close()

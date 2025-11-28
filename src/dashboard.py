@@ -197,7 +197,7 @@ else:
     with st.sidebar:
         user_data = get_user_info(st.session_state['user_id'])
         if user_data:
-            u_name, u_email, u_phone, u_key = user_data
+            u_name, u_email, u_phone, u_key, u_daily_only = user_data
             
             if 'editing_profile' not in st.session_state:
                 st.session_state['editing_profile'] = False
@@ -228,9 +228,12 @@ else:
                     new_u_phone = st.text_input("WhatsApp (55...)", value=u_phone)
                     new_u_key = st.text_input("API Key CallMeBot", value=u_key if u_key else "")
                     
+                    st.markdown("---")
+                    new_daily_only = st.checkbox("🚫 Evitar Spam: Notificar apenas uma vez por dia por produto", value=u_daily_only)
+
                     if st.form_submit_button("💾 Salvar"):
                         clean_phone = sanitize_phone(new_u_phone)
-                        if update_user_profile(st.session_state['user_id'], new_u_name, new_u_email, clean_phone, new_u_key):
+                        if update_user_profile(st.session_state['user_id'], new_u_name, new_u_email, clean_phone, new_u_key, new_daily_only):
                             st.success("Perfil atualizado!")
                             st.session_state['user_name'] = new_u_name
                             st.session_state['editing_profile'] = False

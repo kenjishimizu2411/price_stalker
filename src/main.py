@@ -1,7 +1,7 @@
 import sys
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from dotenv import load_dotenv
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -9,7 +9,7 @@ sys.path.append(os.path.join(current_dir, '..'))
 dotenv_path = os.path.join(current_dir, '..', '.env')
 load_dotenv(dotenv_path)
 
-from src.database import get_db_connection, get_due_products, update_last_checked
+from src.database import get_db_connection, get_due_products, update_last_checked, update_last_notified
 from src.scraper import Scraper
 from src.whatsapp import send_whatsapp_message
 
@@ -29,100 +29,100 @@ def clean_url_for_whatsapp(url):
 
 def job_saas():
     print(f"\n🔄 [SaaS] PriceStalker: {datetime.now().strftime('%H:%M:%S')}")
-    
     tasks = get_due_products()
-
+    
     if not tasks:
         print("💤 Nada pendente.")
         return
 
     print(f"🔥 Processando {len(tasks)} produtos...")
-
     bot = Scraper()
     conn = get_db_connection()
     cursor = conn.cursor()
 
     for task in tasks:
-        prod_id, prod_name, url, target, user_phone, user_name, user_apikey = task
-
+        prod_id, prod_name, url, target, user_phone, user_name, user_apikey, notify_daily, last_notified = task
+        
         target_float = float(target)
-        phone_clean = user_phone.replace("+", "").replace(" ", "").replace("-", "").strip()
+        phone_clean = user_phone.replace("+", "").replace(" ", "").replace("-", "").strip() if user_phone else ""
 
         print(f"   👉 {prod_name} ({user_name})...", end='')
-
+        
         try:
             current_price = bot.get_price(url)
-
+            
             if current_price:
-                cursor.execute(
-                    "INSERT INTO price_history (product_id, price) VALUES (%s, %s)",
-                    (prod_id, current_price)
-                )
+                cursor.execute("INSERT INTO price_history (product_id, price) VALUES (%s, %s)", (prod_id, current_price))
                 conn.commit()
                 update_last_checked(prod_id)
-
+                
                 print(f" R$ {current_price}", end='')
+                
+                should_notify = True
+                if notify_daily and last_notified:
+                    if last_notified.date() == datetime.now(timezone.utc).date():
+                        print(" 🔕 (Spam Block)", end='')   
+                        should_notify = False
 
+                
                 if current_price <= target_float:
-                    
-                    if user_apikey:
-                        print(" 🚨 PREÇO BAIXO! ENVIANDO...")
-                        short_url = clean_url_for_whatsapp(url)
-                        economia = target_float - current_price
-
-                        msg = (
-                            f"🔥 *BAIXOU! OPORTUNIDADE DETECTADA* 🔥\n\n"
-                            f"📦 *{prod_name}*\n\n"
-                            f"😱 Achei o seu produto por *R$ {current_price:.2f}*!!!\n"
-                            f"🎯 Você queria que ele chegasse a *R$ {target_float:.2f}*...\n\n"
-                            f"📉 Ou seja: *R$ {economia:.2f} DE DESCONTO* se comprar agora!!\n\n"
-                            f"👉 *Garanta aqui:* {short_url}"
-                        )
-
-                        success = send_whatsapp_message(phone_clean, msg, user_apikey)
-                        if not success:
-                            print("      ❌ Falha no envio do Zap (Verifique chave/fone)")
-                    else:
-                        print("      ⚠️ Usuário sem API Key. Não notificado.")
-
-                elif current_price <= (target_float * 1.15):
-                    
-                    if user_apikey:
-                        print(" 🤏 TÁ QUASE! ENVIANDO ALERTA SECRETO...")
-                        short_url = clean_url_for_whatsapp(url)
-                        diferenca = current_price - target_float
-
-                        msg = (
-                            f"👀 *PSIU! TÁ QUASE LÁ...* 👀\n\n"
-                            f"📦 *{prod_name}*\n"
-                            f"O preço caiu para *R$ {current_price:.2f}*.\n"
-                            f"Ainda está R$ {diferenca:.2f} acima da sua meta, mas achei que você gostaria de saber!\n\n"
-                            f"🔗 Espiar: {short_url}"
-                        )
-
-                        success = send_whatsapp_message(phone_clean, msg, user_apikey)
-                        if not success:
-                            print("      ❌ Falha no envio do Zap")
-                    else:
-                        print("      ⚠️ Usuário sem API Key.")
-
+                    if should_notify:
+                        if user_apikey:
+                            print(" 🚨 BAIXOU!", end='')
+                            short_url = clean_url_for_whatsapp(url)
+                            economia = target_float - current_price
+                            msg = (
+                                f"🔥 *BAIXOU! OPORTUNIDADE* 🔥\n\n"
+                                f"📦 *{prod_name}*\n"
+                                f"😱 Achei o seu produto por *R$ {current_price:.2f}*!!!\n"
+                                f"🎯 Você queria que ele chegasse a *R$ {target_float:.2f}*\n\n"
+                                f"📉 Ou seja: *R$ {economia:.2f} DE DESCONTO* se comprar *AGORA*!!\n\n" 
+                                f"👉 *Garanta aqui:* {short_url}"
+                            )
+                            if send_whatsapp_message(phone_clean, msg, user_apikey):
+                                update_last_notified(prod_id)
+                            else:
+                                print(" ❌ Falha Zap", end='')
+                        else:
+                            print(" ⚠️ Sem Key", end='')
+                
+                elif current_price <= (target_float * 1.10):
+                    if should_notify:
+                        if user_apikey:
+                            print(" 🤏 QUASE!", end='')
+                            short_url = clean_url_for_whatsapp(url)
+                            diferenca = current_price - target_float
+                            msg = (
+                                f"👀 *PSIU! TÁ QUASE LÁ...* 👀\n\n"
+                                f"📦 *{prod_name}*\n"
+                                f"O preço caiu para *R$ {current_price:.2f}*.\n"
+                                f"Ainda está *R$ {diferenca:.2f}* acima da sua meta, mas, achei que você gostaria de saber!\n"
+                                f"🔗 Espiar: {short_url}"
+                            )
+                            if send_whatsapp_message(phone_clean, msg, user_apikey):
+                                update_last_notified(prod_id)
+                            else:
+                                print(" ❌ Falha Zap", end='')
+                        else:
+                            print(" ⚠️ Sem Key", end='')
+                
                 else:
-                    print(" 📉 (Caro)")
+                    print(" 📉 (Caro)", end='')
 
             else:
-                print(" ❌ Erro leitura")
+                print(" ❌ Erro leitura", end='')
                 update_last_checked(prod_id)
-
+        
         except Exception as e:
-            print(f"\n      ⚠️ Erro: {e}")
+            print(f"\n      ⚠️ Erro tarefa: {e}")
             conn.rollback()
             update_last_checked(prod_id)
+            
+        print("")
 
     conn.close()
-    try:
-        bot.close_browser()
-    except:
-        pass
+    try: bot.close_browser()
+    except: pass
 
 def run_once():
     """Roda uma única vez (Para Cloud/Cron Jobs)"""
