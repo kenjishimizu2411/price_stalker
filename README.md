@@ -80,13 +80,13 @@ graph TD
 Se você deseja clonar e modificar o projeto:
 
 ### 1. Clone o Repositório
-'''bash
+```bash
 git clone [https://github.com/kenjishimizu2411/price_stalker.git](https://github.com/kenjishimizu2411/price_stalker.git)
 cd price_stalker
-'''
+```
 
 ### 2. Configure o Ambiente
-'''bash
+```bash
 python -m venv venv
 # Windows:
 venv\Scripts\activate
@@ -94,22 +94,22 @@ venv\Scripts\activate
 source venv/bin/activate
 
 pip install -r requirements.txt
-'''
+```
 
 ### 3. Variáveis de Ambiente (.env)
 Crie um arquivo `.env` na raiz do diretório com a string de conexão do seu banco (Local ou Neon):
-'''ini
+```ini
 DATABASE_URL="postgres://usuario:senha@host:porta/banco"
-'''
+```
 
 ### 4. Executar Aplicação
-'''bash
+```bash
 # Rodar o Dashboard
 streamlit run src/dashboard.py
 
 # Rodar o Scraper (uma vez)
 python src/main.py
-'''
+```
 
 ---
 
